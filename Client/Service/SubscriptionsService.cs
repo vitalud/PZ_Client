@@ -16,7 +16,7 @@ namespace Client.Service
         public SourceList<Subscription> Subscriptions => _subscriptions;
         public void GetStrategy(Subscription sub)
         {
-            Subscriptions.Add(sub);
+            Logger.UiInvoke(() => Subscriptions.Add(sub));
         }
         public void GetSignal(string data)
         {

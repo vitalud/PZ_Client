@@ -1,6 +1,5 @@
 ﻿using Client.Service;
 using ReactiveUI;
-using System.Windows.Input;
 
 namespace Client.Model
 {

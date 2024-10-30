@@ -3,7 +3,7 @@ using Client.Service.Abstract;
 
 namespace Client.ViewModel.Burse
 {
-    public class OkxViewModel(OkxModel okxModel) : BurseViewModel(okxModel)
+    public class OkxViewModel(OkxModelTest okxModel) : BurseViewModel(okxModel)
     {
     }
 }

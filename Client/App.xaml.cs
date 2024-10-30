@@ -7,6 +7,8 @@ using Client.View.Window;
 using Client.ViewModel;
 using Client.ViewModel.Burse;
 using ProjectZeroLib.Enums;
+using ReactiveUI;
+using System.Reactive.Linq;
 using System.Windows;
 
 namespace Client
@@ -25,7 +27,8 @@ namespace Client
             builder.RegisterType<AuthView>()
                 .OnActivating(eventArgs => eventArgs.Instance.DataContext = eventArgs.Context.Resolve<AuthViewModel>());
 
-            builder.RegisterType<OkxModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Okx);
+            builder.RegisterType<OkxModelTest>().AsSelf().SingleInstance().WithParameter("name", BurseName.Okx);
+            //builder.RegisterType<OkxModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Okx);
             builder.RegisterType<OkxViewModel>().AsSelf().SingleInstance();
 
             builder.RegisterType<BinanceModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Binance); ;
@@ -52,20 +55,20 @@ namespace Client
             using var scope = container.BeginLifetimeScope();
             var mainWindow = scope.Resolve<MainView>();
 
-            mainWindow.ShowDialog();
+            //mainWindow.ShowDialog();
 
-            //var authWindow = scope.Resolve<AuthView>();
-            //authWindow.ShowDialog();
+            var authWindow = scope.Resolve<AuthView>();
+            authWindow.ShowDialog();
 
-            //var mainViewModel = scope.Resolve<MainViewModel>();
-            //mainViewModel.WhenAnyValue(x => x.ApplicationClosing)
-            //    .Where(closing => closing)
-            //    .Subscribe(_ => mainWindow.Close());
+            var mainViewModel = scope.Resolve<MainViewModel>();
+            mainViewModel.WhenAnyValue(x => x.ApplicationClosing)
+                .Where(closing => closing)
+                .Subscribe(_ => mainWindow.Close());
 
-            //if ((bool)authWindow.DialogResult)
-            //    mainWindow.ShowDialog();
-            //else
-            //    mainWindow.Close();
+            if ((bool)authWindow.DialogResult)
+                mainWindow.ShowDialog();
+            else
+                mainWindow.Close();
         }
     }
 }

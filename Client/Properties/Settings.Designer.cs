@@ -72,7 +72,7 @@ namespace Client.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("192.168.56.1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("85.92.108.100")]
         public string ServerIp {
             get {
                 return ((string)(this["ServerIp"]));

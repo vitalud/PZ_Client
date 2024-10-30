@@ -10,8 +10,8 @@ namespace Client.Service.Abstract
         protected readonly SubscriptionsService _subscriptions;
 
         protected readonly string address = ConfigService.GetIp();
-        protected readonly int dataPort = 44444;
-        protected readonly int authPort = 22222;
+        protected readonly int dataPort = 49107;
+        protected readonly int authPort = 29019;
         protected readonly Guid sessionId = Guid.NewGuid();
 
         public Connector(SubscriptionsService subscriptions)
