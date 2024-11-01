@@ -47,7 +47,7 @@
         }
         public static void SetInterval(string code, int interval)
         {
-            if (interval < 2) return;
+            if (interval < 1) return;
 
             var intervals = Properties.Settings.Default.Intervals;
             for (int i = 0; i < intervals.Count; i++)

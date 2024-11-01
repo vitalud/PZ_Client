@@ -27,10 +27,12 @@ namespace Client.Model.Burse
             _rest = new BinanceRestClient(options =>
             {
                 options.OutputOriginalData = true;
+                options.Environment = Binance.Net.BinanceEnvironment.Testnet;
             });
             _socket = new BinanceSocketClient(options =>
             {
                 options.OutputOriginalData = true;
+                options.Environment = Binance.Net.BinanceEnvironment.Testnet;
             });
         }
 

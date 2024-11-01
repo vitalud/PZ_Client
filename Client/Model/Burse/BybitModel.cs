@@ -1,12 +1,10 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
-using Bybit.Net.Enums.V5;
 using Bybit.Net.Objects.Models.V5;
 using Client.Service;
 using Client.Service.Abstract;
 using Client.Service.Sub;
 using CryptoExchange.Net.Authentication;
-using CryptoExchange.Net.CommonObjects;
 using CryptoExchange.Net.Objects.Sockets;
 using DynamicData;
 using ProjectZeroLib;
@@ -28,10 +26,12 @@ namespace Client.Model.Burse
             _rest = new BybitRestClient(options =>
             {
                 options.OutputOriginalData = true;
+                options.Environment = Bybit.Net.BybitEnvironment.DemoTrading;
             });
             _socket = new BybitSocketClient(options =>
             {
                 options.OutputOriginalData = true;
+                options.Environment = Bybit.Net.BybitEnvironment.DemoTrading;
             });
         }
         protected override async Task<bool> GetConnection()
@@ -39,11 +39,14 @@ namespace Client.Model.Burse
             var api = ConfigService.GetKey("Bybit", "Api");
             var secret = ConfigService.GetKey("Bybit", "Secret");
             var credentials = new ApiCredentials(api, secret);
+
             _rest.SetApiCredentials(credentials);
             _socket.SetApiCredentials(credentials);
+            _rest.ClientOptions.ApiCredentials = credentials;
+            _socket.ClientOptions.ApiCredentials = credentials;
 
             var result = false;
-            var ticker = await _rest.V5Api.ExchangeData.GetSpotTickersAsync("BTC-USDT");
+            var ticker = await _rest.V5Api.ExchangeData.GetSpotTickersAsync("BTCUSDT");
             var balance = await _socket.V5PrivateApi.SubscribeToWalletUpdatesAsync(OnAccountUpdated);
             if (ticker.Success && balance.Success)
                 result = true;
@@ -307,7 +310,7 @@ namespace Client.Model.Burse
 
         private async Task Test001()
         {
-            var trade = await _rest.V5Api.Trading.PlaceOrderAsync(Category.Undefined, "BTC-USDT", OrderSide.Sell, NewOrderType.Market, 0.00001m, clientOrderId: "VitalUd00050");
+            var trade = await _rest.V5Api.Trading.PlaceOrderAsync(Category.Linear, "BTCUSDT", OrderSide.Sell, NewOrderType.Market, 0.001m, clientOrderId: "VitalUd20010");
         }
     }
 }

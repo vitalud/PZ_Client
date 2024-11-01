@@ -24,6 +24,7 @@
             
         </Style>
     </UserControl.Resources>
+    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="0.1*"/>
@@ -107,7 +108,7 @@
                                 <DataGridTextColumn Header="Id" Binding="{Binding InstrumentIds}" CanUserResize="False"
                                         IsReadOnly="True" Width="*"/>
                                 <DataGridTextColumn Header="Limit" Binding="{Binding TradeLimit}" CanUserResize="False"
-                                        IsReadOnly="true" Width="Auto"/>
+                                        IsReadOnly="true" Width="50"/>
                                 <DataGridTextColumn Header="Interval" Binding="{Binding UpdateTime}" CanUserResize="False"
                                         Width="Auto"/>
                                 <DataGridTextColumn Header="Position" Binding="{Binding Position}" CanUserResize="False"

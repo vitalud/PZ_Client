@@ -1,9 +1,7 @@
-﻿using CryptoExchange.Net.Sockets;
-using DynamicData;
+﻿using DynamicData;
 using Newtonsoft.Json;
 using ProjectZeroLib;
 using ProjectZeroLib.Enums;
-using ReactiveUI;
 using System.Reactive.Linq;
 
 namespace Client.Service
@@ -14,6 +12,18 @@ namespace Client.Service
 
         private readonly SourceList<Subscription> _subscriptions = new();
         public SourceList<Subscription> Subscriptions => _subscriptions;
+
+        public SubscriptionsService()
+        {
+            var sub = new Subscription
+            {
+                Code = "2001",
+                Name = BurseName.Bybit,
+                TradeLimit = 15000,
+            };
+            GetStrategy(sub);
+        }
+
         public void GetStrategy(Subscription sub)
         {
             Logger.UiInvoke(() => Subscriptions.Add(sub));

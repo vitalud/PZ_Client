@@ -26,10 +26,12 @@ namespace Client.Model.Burse
             _rest = new OKXRestClient(options =>
             {
                 options.OutputOriginalData = true;
+                options.Environment = OKX.Net.OKXEnvironment.Demo;
             });
             _socket = new OKXSocketClient(options =>
             {
                 options.OutputOriginalData = true;
+                options.Environment = OKX.Net.OKXEnvironment.Demo;
             });
         }
         protected override async Task<bool> GetConnection()
