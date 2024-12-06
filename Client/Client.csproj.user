@@ -16,9 +16,6 @@
     <Compile Update="View\UserControls\SettingsControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="View\Window\CustomMessageBox.xaml.cs">
-      <SubType>Code</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Page Update="View\Styles.xaml">
@@ -37,9 +34,6 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Update="View\Window\AuthView.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Update="View\Window\CustomMessageBox.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="View\Window\MainView.xaml">

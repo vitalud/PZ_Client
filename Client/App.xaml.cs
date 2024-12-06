@@ -27,7 +27,7 @@ namespace Client
             builder.RegisterType<AuthView>()
                 .OnActivating(eventArgs => eventArgs.Instance.DataContext = eventArgs.Context.Resolve<AuthViewModel>());
 
-            builder.RegisterType<OkxModelTest>().AsSelf().SingleInstance().WithParameter("name", BurseName.Okx);
+            builder.RegisterType<OkxModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Okx);
             builder.RegisterType<OkxViewModel>().AsSelf().SingleInstance();
 
             builder.RegisterType<BinanceModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Binance); ;

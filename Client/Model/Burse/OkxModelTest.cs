@@ -52,9 +52,9 @@ namespace Client.Model.Burse
                                 Logger.UiInvoke(() =>
                                 {
                                     _.Date = order.CreateTime.ToString(dateFormat);
-                                    _.OrderId = order.OrderId;
+                                    _.OrderId = order.OrderId.ToString();
                                     _.Status = order.OrderState.ToString();
-                                    _.Size = order.Quantity.ToString();
+                                    _.Size = (decimal)order.Quantity;
                                     _.Price = (decimal)order.Price;
                                 });
                             }
@@ -159,35 +159,6 @@ namespace Client.Model.Burse
         {
             var account = await _socket.Account.SubscribeToPositionUpdatesAsync(OnPositionUpdated, OkxInstrumentType.Any);
             var orders = await _socket.Trade.SubscribeToOrderUpdatesAsync(OnOrderUpdated, OkxInstrumentType.Any);
-            await GetOrders();
-        }
-        protected override async Task GetOrders()
-        {
-            var orders = await _rest.Trade.GetOpenOrdersAsync();
-            if (orders.Data != null)
-            {
-                foreach (var order in orders.Data)
-                {
-                    if (order.ClientOrderId != null)
-                    {
-                        var sub = Subscriptions.Items.FirstOrDefault(x => order.ClientOrderId.Contains(x.ClientOrderId));
-                        if (sub != null)
-                        {
-                            sub.Orders.Add(new()
-                            {
-                                Date = order.UpdateTime.ToString(),
-                                OrderId = order.OrderId,
-                                InstrumentId = order.InstrumentId,
-                                InstrumentType = order.InstrumentType.ToString(),
-                                ClientOrderId = order.ClientOrderId,
-                                Price = (decimal)order.Price,
-                                Side = order.OrderSide.ToString(),
-                                Status = order.OrderState.ToString()
-                            });
-                        }
-                    }
-                }
-            }
         }
         protected override async Task PlaceOrder(SourceList<Order> orders, decimal limit)
         {
@@ -199,8 +170,7 @@ namespace Client.Model.Burse
 
                     foreach (var order in orders.Items)
                     {
-                        var size = Math.Round(0.995m * limit / (orders.Count * order.Price), 5);
-                        order.Size = size.ToString(CultureInfo.InvariantCulture);
+                        order.Size = Math.Round(0.995m * limit / (orders.Count * order.Price), 5);
                     }
 
                     foreach (var order in orders.Items)
@@ -213,7 +183,7 @@ namespace Client.Model.Burse
                             OrderSide = side,
                             PositionSide = OkxTradePositionSide.Net,
                             OrderType = OkxTradeOrderType.LimitOrder,
-                            Size = order.Size,
+                            Size = order.Size.ToString(CultureInfo.InvariantCulture),
                             Price = order.Price.ToString(CultureInfo.InvariantCulture),
                             Currency = "USDT",
                             ClientOrderId = order.ClientOrderId,
@@ -224,7 +194,7 @@ namespace Client.Model.Burse
                 }
             }
         }
-        protected override async void UpdateOrderByTime(Order order, StockInfo stock)
+        protected override async void UpdateOrderByTime(Order order, SubStockData stock, int position)
         {
             var ticker = await _rest.Public.GetTickerAsync(order.InstrumentId);
             if (ticker.Error != null) return;
@@ -245,7 +215,7 @@ namespace Client.Model.Burse
             order.Price = price;
             await _rest.Trade.AmendOrderAsync(order.InstrumentId, newPrice: order.Price, clientOrderId: order.ClientOrderId);
         }
-        protected override async Task ClosePosition(Position position)
+        protected override async Task ClosePosition(Position position, string clientOrderId)
         {
             var close = await _rest.Trade.ClosePositionAsync(position.InstrumentId, OkxAccountMarginMode.Cross, currency: "USDT");
         }
@@ -304,7 +274,7 @@ namespace Client.Model.Burse
             {
                 OkxTradeMode tdMode = OkxTradeMode.Cross;
                 OkxTradeOrderSide side = order.Side.Equals("Sell") ? OkxTradeOrderSide.Buy : OkxTradeOrderSide.Sell;
-                var trade = await _rest.Trade.PlaceOrderAsync(order.InstrumentId, tdMode, side, OkxTradePositionSide.Net, OkxTradeOrderType.MarketOrder, decimal.Parse(order.Size), clientOrderId: order.ClientOrderId + 'm');
+                var trade = await _rest.Trade.PlaceOrderAsync(order.InstrumentId, tdMode, side, OkxTradePositionSide.Net, OkxTradeOrderType.MarketOrder, order.Size, clientOrderId: order.ClientOrderId + 'm');
             }
         }
 

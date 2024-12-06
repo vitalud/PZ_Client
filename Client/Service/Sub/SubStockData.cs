@@ -10,7 +10,7 @@ namespace Client.Service.Sub
     /// <param name="instId">Имя инструмента.</param>
     /// <param name="priceStep">Шаг цены.</param>
     /// <param name="limit">Торговый лимит в валюте.</param>
-    public class StockInfo(string clientOrderId, string instType, string instId, decimal priceStep, decimal limit, decimal equivalent, decimal multiplier) : ReactiveObject
+    public class SubStockData(string clientOrderId, string instType, string instId, decimal priceStep, decimal limit, decimal equivalent, decimal multiplier) : ReactiveObject
     {
         #region private
         private decimal _limit = limit;

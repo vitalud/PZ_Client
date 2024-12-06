@@ -10,6 +10,7 @@ namespace Client.Service.Sub
         private string _instrumentId = string.Empty;
         private string _side = string.Empty;
         private decimal _profit;
+        private long? _ticks;
 
         public long? TradeId
         {
@@ -40,6 +41,11 @@ namespace Client.Service.Sub
         {
             get => _profit;
             set => this.RaiseAndSetIfChanged(ref _profit, value);
+        }
+        public long? Ticks
+        {
+            get => _ticks;
+            set => this.RaiseAndSetIfChanged(ref _ticks, value);
         }
     }
 }

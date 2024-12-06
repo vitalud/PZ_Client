@@ -8,8 +8,8 @@ using System.Reactive.Linq;
 namespace Client.Service.Abstract
 {
     public delegate Task PlaceOrder(SourceList<Order> orders, decimal limit);
-    public delegate void OrderUpdate(Order order, StockInfo stock);
-    public delegate Task ClosePosition(Position position);
+    public delegate void OrderUpdate(Order order, SubStockData stock, int position);
+    public delegate Task ClosePosition(Position position, string clientOrderId);
     public delegate bool CheckBalance(decimal limit);
     public abstract class BurseModel : ReactiveObject
     {
@@ -54,6 +54,10 @@ namespace Client.Service.Abstract
 
             Subscriptions.Connect()
                 .Subscribe(OnSubsCountChanged);
+
+            this.WhenAnyValue(x => x.Balance)
+                .Skip(1)
+                .Subscribe(value => Balance = Math.Round(value, 3));
         }
 
         private void OnSubsCountChanged(IChangeSet<Subscription> changes)
@@ -80,14 +84,12 @@ namespace Client.Service.Abstract
         private void RegisterStrategy(Subscription sub)
         {
             ConfigService.GetInterval(sub);
-            sub.ClientOrderId = ConfigService.GetLogin() + sub.Code;
-            var index = 0;
+            sub.ClientOrderId = $"st_{sub.Code}";
             foreach (var stock in sub.Stocks)
             {
                 sub.InstrumentIds += stock.InstrumentId + "\t";
                 sub.InstrumentTypes += stock.InstrumentType + "\t";
-                stock.ClientOrderId = sub.ClientOrderId + index;
-                index++;
+                stock.ClientOrderId = sub.ClientOrderId;
             }
             sub.RegisterPlaceOrderHandler(PlaceOrder);
             sub.RegisterOrderUpdateHandler(UpdateOrderByTime);
@@ -96,68 +98,80 @@ namespace Client.Service.Abstract
 
             sub.WhenAnyValue(x => x.Signal)
                 .Skip(1)
-                .Subscribe(signal => GetOrdersFromSignal(sub, signal));
+                .Subscribe(async signal => await GetOrdersFromSignal(sub, signal));
         }
-        protected void GetOrdersFromSignal(Subscription sub, Signal signal)
+        protected async Task GetOrdersFromSignal(Subscription sub, Signal signal)
         {
-            lock (sub)
+            if (sub.Orders.Items.Count > 0 && sub.Orders.Items.Count < signal.Stocks.Count)
             {
-                if (sub.Orders.Items.Count > 0 && sub.Orders.Items.Count < signal.Stocks.Count)
+                //не все ордера исполнены
+            }
+            else if (signal.Stocks.Count > 0)
+            {
+                for (int i = 0; i < signal.Stocks.Count; i++)
                 {
-                    //не все ордера исполнены
-                }
-                else if (signal.Stocks.Count > 0)
-                {
-                    for (int i = 0; i < signal.Stocks.Count; i++)
+                    var order = signal.Stocks[i];
+                    var _ = sub.Orders.Items.FirstOrDefault(x => (x.InstrumentId, x.InstrumentType).Equals((order.InstrumentId, order.InstrumentType)));
+                    if (_ != null)
                     {
-                        var order = signal.Stocks[i];
-                        var _ = sub.Orders.Items.FirstOrDefault(x => (x.InstrumentId, x.InstrumentType).Equals((order.InstrumentId, order.InstrumentType)));
-                        if (_ != null)
+                        await Logger.UiInvoke(() =>
                         {
-                            Logger.UiInvoke(() =>
-                            {
-                                _.Date = DateTime.UtcNow.ToString(dateFormat);
-                                _.Side = order.Signal;
-                                _.Price = order.OpenPrice;
-                            });
-                        }
-                        else
+                            _.Date = DateTime.UtcNow.ToString(dateFormat);
+                            _.Side = order.Signal;
+                            _.Price = order.OpenPrice;
+                        });
+                    }
+                    else
+                    {
+                        await Logger.UiInvoke(() =>
                         {
-                            Logger.UiInvoke(() =>
+                            sub.Orders.Add(new()
                             {
-                                sub.Orders.Add(new()
-                                {
-                                    Date = DateTime.UtcNow.ToString(dateFormat),
-                                    InstrumentId = order.InstrumentId,
-                                    InstrumentType = order.InstrumentType,
-                                    ClientOrderId = sub.ClientOrderId + i,
-                                    Price = order.OpenPrice,
-                                    Side = order.Signal,
-                                    Status = "Waiting"
-                                });
+                                Date = DateTime.UtcNow.ToString(dateFormat),
+                                InstrumentId = order.InstrumentId,
+                                InstrumentType = order.InstrumentType,
+                                ClientOrderId = sub.ClientOrderId,
+                                Price = order.OpenPrice,
+                                Side = order.Signal,
+                                Status = "Waiting"
                             });
-                        }
+                        });
                     }
                 }
             }
-        }
 
+        }
         public async void Connect()
         {
-            IsConnected = await GetConnection();
-            if (IsConnected)
+            if (IsConnected.Equals(false))
             {
-                await SetupSocket();
+                IsConnected = await GetConnection();
+                if (IsConnected)
+                {
+                    await SetupSocket();
+                }
             }
         }
+        protected string GetClientOrderId(int x)
+        {
+            string pass = "_";
+            var r = new Random();
+            while (pass.Length < x)
+            {
+                char ch = (char)r.Next(33, 125);
+                if (char.IsLetterOrDigit(ch))
+                    pass += ch;
+            }
+            return pass;
+        }
+
 
         protected abstract Task PlaceOrder(SourceList<Order> orders, decimal limit);
-        protected abstract void UpdateOrderByTime(Order order, StockInfo stock);
-        protected abstract Task ClosePosition(Position position);
+        protected abstract void UpdateOrderByTime(Order order, SubStockData stock, int position);
+        protected abstract Task ClosePosition(Position position, string clientOrderId);
         protected abstract bool CheckBalanceOnStart(decimal limit);
         protected abstract Task SetupSocket();
         protected abstract Task<bool> GetConnection();
-        protected abstract Task GetOrders();
         public abstract void Test();
     }
 }

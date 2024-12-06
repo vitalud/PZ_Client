@@ -10,12 +10,12 @@ namespace Client.Service.Sub
         private string _title = string.Empty;
         private string _date = string.Empty;
         private string _clientOrderId = string.Empty;
-        private long? _orderId;
+        private string _orderId = string.Empty;
         private long? _tradeId;
         private string _status = string.Empty;
         private string _instrumentType = string.Empty;
         private string _instrumentId = string.Empty;
-        private string _size = string.Empty;
+        private decimal _size;
         private string _side = string.Empty;
         private decimal _price;
 
@@ -49,7 +49,7 @@ namespace Client.Service.Sub
         /// <summary>
         /// Id ордера на бирже, создаваемый биржей.
         /// </summary>
-        public long? OrderId
+        public string OrderId
         {
             get => _orderId;
             set => this.RaiseAndSetIfChanged(ref _orderId, value);
@@ -94,7 +94,7 @@ namespace Client.Service.Sub
         /// <summary>
         /// Количество инструмента в ордере.
         /// </summary>
-        public string Size
+        public decimal Size
         {
             get => _size;
             set => this.RaiseAndSetIfChanged(ref _size, value);

@@ -115,10 +115,10 @@ namespace Client.Service
 
 
 
-        private ObservableCollection<StockInfo> _stocks = [];
+        private ObservableCollection<SubStockData> _stocks = [];
 
-        [JsonProperty("BurseInfo")]
-        public ObservableCollection<StockInfo> Stocks
+        [JsonProperty("Stocks")]
+        public ObservableCollection<SubStockData> Stocks
         {
             get => _stocks;
             set => this.RaiseAndSetIfChanged(ref _stocks, value);
@@ -253,7 +253,7 @@ namespace Client.Service
                         var position = Positions.Items.FirstOrDefault(x => x.InstrumentId.Equals(trade.InstrumentId));
                         if (position != null)
                         {
-                            await closePosition?.Invoke(position);
+                            await closePosition?.Invoke(position, ClientOrderId);
                         }
                     }
                 }
@@ -265,8 +265,6 @@ namespace Client.Service
             if (active)
             {
                 IsActive = (bool)checkBalance?.Invoke(TradeLimit);
-                if (!IsActive)
-                    MessageBus.Current.SendMessage(new MessageToShow("Недостаточно средств на счете"));
             }
         }
 
@@ -275,20 +273,17 @@ namespace Client.Service
             var currentTime = DateTime.UtcNow;
             var secondsRemaining = 60 - currentTime.Second;
             var timeToNextMinute = TimeSpan.FromSeconds(secondsRemaining);
-            _timer = new Timer(UpdateOrders, null, timeToNextMinute, TimeSpan.FromSeconds(UpdateTime));
+            _timer = new Timer(UpdateOrders, null, TimeSpan.Zero, TimeSpan.FromSeconds(UpdateTime));
         }
         private void UpdateOrders(object? state)
         {
-            if (IsActive)
+            foreach (var item in Orders.Items)
             {
-                foreach (var item in Orders.Items)
+                if (item.Status.Equals("Live"))
                 {
-                    if (item.Status.Equals("Live"))
-                    {
-                        var stock = Stocks.FirstOrDefault(x => x.InstrumentId.Equals(item.InstrumentId) && x.InstrumentType.Equals(item.InstrumentType));
-                        if (stock != null)
-                            orderUpdate?.Invoke(item, stock);
-                    }
+                    var stock = Stocks.FirstOrDefault(x => x.InstrumentId.Equals(item.InstrumentId) && x.InstrumentType.Equals(item.InstrumentType));
+                    if (stock != null)
+                        orderUpdate?.Invoke(item, stock, Position);
                 }
             }
         }

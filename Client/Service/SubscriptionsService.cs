@@ -15,13 +15,7 @@ namespace Client.Service
 
         public SubscriptionsService()
         {
-            var sub = new Subscription
-            {
-                Code = "2001",
-                Name = BurseName.Bybit,
-                TradeLimit = 15000,
-            };
-            GetStrategy(sub);
+
         }
 
         public void GetStrategy(Subscription sub)

@@ -19,9 +19,6 @@
         <DataTemplate DataType="{x:Type vm:BybitViewModel}">
             <control:BurseControl/>
         </DataTemplate>
-        <!--<DataTemplate DataType="{x:Type vm:QuikViewModel}">
-            <control:BurseControl/>
-        </DataTemplate>-->
     </UserControl.Resources>
     
     <Grid>
@@ -39,32 +36,16 @@
 
                 <Grid Grid.Column="0" Margin="5">
                     <ComboBox
-                        Width="250"
+                        Width="150"
                         HorizontalAlignment="Left"
                         BorderBrush="LightGray"
-                        materialDesign:HintAssist.Hint="Choose burse"
+                        materialDesign:HintAssist.Hint="Burse"
                         Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                        
                         ItemsSource="{Binding BurseViewModels}"
                         DisplayMemberPath="Name"
                         SelectedItem="{Binding CurrentBurseViewModel, Mode=TwoWay}">
                     </ComboBox>
-
                 </Grid>
-
-                <!--<Grid Grid.Column="1">
-                    <Border CornerRadius="5" Margin="5" 
-                            BorderThickness="1" BorderBrush="LightGray"
-                            Width="160" HorizontalAlignment="Right">
-                        <StackPanel>
-                            <Label Content="Balance" FontSize="10" 
-                                   Padding="1" Foreground="Gray"
-                                   Margin="10,0"/>
-                            <Label Content="{Binding Balance}"
-                                   Margin="5" FontSize="14"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>-->
             </Grid>
         </Grid>
 

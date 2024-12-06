@@ -74,9 +74,9 @@ namespace Client.Model.Burse
                                 Logger.UiInvoke(() =>
                                 {
                                     _.Date = data.CreateTime.ToString(dateFormat);
-                                    _.OrderId = data.OrderId;
+                                    _.OrderId = data.OrderId.ToString();
                                     _.Status = data.OrderState.ToString();
-                                    _.Size = data.Quantity.ToString();
+                                    _.Size = (decimal)data.Quantity;
                                     _.Price = (decimal)data.Price;
                                 });
                             }
@@ -165,70 +165,51 @@ namespace Client.Model.Burse
         }
 
         //вызывать метод при получении стратегии от сервера
-        protected override async Task GetOrders()
-        {
-            var orders = await _rest.UnifiedApi.Trading.GetOrdersAsync();
-            if (orders.Data != null)
-            {
-                foreach (var order in orders.Data)
-                {
-                    if (order.ClientOrderId != null)
-                    {
-                        var sub = Subscriptions.Items.FirstOrDefault(x => order.ClientOrderId.Contains(x.ClientOrderId));
-                        if (sub != null)
-                        {
-                            sub.Orders.Add(new()
-                            {
-                                Date = order.UpdateTime.ToString(),
-                                OrderId = order.OrderId,
-                                InstrumentId = order.Symbol,
-                                InstrumentType = order.InstrumentType.ToString(),
-                                ClientOrderId = order.ClientOrderId,
-                                Price = (decimal)order.Price,
-                                Side = order.OrderSide.ToString(),
-                                Status = order.OrderState.ToString()
-                            });
-                        }
-                    }
-                }
-            }
-        }
         protected override async Task PlaceOrder(SourceList<Order> orders, decimal limit)
         {
             if (IsConnected)
             {
                 if (Balance > limit)
                 {
-                    List<OKXOrderPlaceRequest> _ = [];
-
-                    foreach (var order in orders.Items)
+                    try
                     {
-                        var size = Math.Round(0.995m * limit / (orders.Count * order.Price), 5);
-                        order.Size = size.ToString(CultureInfo.InvariantCulture);
-                    }
+                        List<OKXOrderPlaceRequest> request = [];
 
-                    foreach (var order in orders.Items)
-                    {
-                        OrderSide side = order.Side.Equals("Sell") ? OrderSide.Sell : OrderSide.Buy;
-                        _.Add(new()
+                        foreach (var order in orders.Items)
                         {
-                            Symbol = order.InstrumentId,
-                            TradeMode = TradeMode.Cross,
-                            OrderSide = side,
-                            PositionSide = PositionSide.Net,
-                            OrderType = OrderType.Limit,
-                            Quantity = decimal.Parse(order.Size),
-                            Price = order.Price,
-                            Asset = "USDT",
-                            ClientOrderId = order.ClientOrderId,
+                            order.Size = Math.Round(0.995m * limit / (orders.Count * order.Price), 5);
+                        }
 
-                        });
+                        foreach (var order in orders.Items)
+                        {
+                            var side = order.Side.Equals("Sell") ? OrderSide.Sell : OrderSide.Buy;
+                            request.Add(new()
+                            {
+                                Symbol = order.InstrumentId,
+                                TradeMode = TradeMode.Cross,
+                                OrderSide = side,
+                                PositionSide = PositionSide.Net,
+                                OrderType = OrderType.Limit,
+                                Quantity = order.Size,
+                                Price = order.Price,
+                                Asset = "USDT",
+                                ClientOrderId = order.ClientOrderId,
+                            });
+                        }
+                        var trade = await _rest.UnifiedApi.Trading.PlaceMultipleOrdersAsync(request);
                     }
-                    var trade = await _rest.UnifiedApi.Trading.PlaceMultipleOrdersAsync(_);
+                    catch (Exception ex)
+                    {
+
+                    }
+                    finally
+                    {
+                        //
+                    }
                 }
             }
         }
-        protected override async void UpdateOrderByTime(Order order, StockInfo stock)
+        protected override async void UpdateOrderByTime(Order order, SubStockData stock, int position)
         {
             var ticker = await _rest.UnifiedApi.ExchangeData.GetTickerAsync(order.InstrumentId);
             if (ticker.Error != null) return;
@@ -249,7 +230,7 @@ namespace Client.Model.Burse
             order.Price = price;
             await _rest.UnifiedApi.Trading.AmendOrderAsync(order.InstrumentId, newPrice: order.Price, clientOrderId: order.ClientOrderId);
         }
-        protected override async Task ClosePosition(Position position)
+        protected override async Task ClosePosition(Position position, string clientOrderId)
         {
             var close = await _rest.UnifiedApi.Trading.ClosePositionAsync(position.InstrumentId, MarginMode.Cross);
         }
@@ -312,7 +293,7 @@ namespace Client.Model.Burse
             {
                 TradeMode tdMode = TradeMode.Cross;
                 OrderSide side = order.Side.Equals("Sell") ? OrderSide.Buy : OrderSide.Sell;
-                var trade = await _rest.UnifiedApi.Trading.PlaceOrderAsync(order.InstrumentId, side, OrderType.Market, decimal.Parse(order.Size), positionSide: PositionSide.Net, tradeMode: tdMode, clientOrderId: order.ClientOrderId + 'm');
+                var trade = await _rest.UnifiedApi.Trading.PlaceOrderAsync(order.InstrumentId, side, OrderType.Market, order.Size, positionSide: PositionSide.Net, tradeMode: tdMode, clientOrderId: order.ClientOrderId + 'm');
             }
         }
 

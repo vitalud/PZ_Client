@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:control="clr-namespace:Client.View.UserControls"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="1000">
@@ -34,46 +35,61 @@
         <Grid Grid.Row="0">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition Width="0.7*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                
+
                 <Grid Grid.Column="1">
                     <DockPanel>
-                        <Border CornerRadius="5" Margin="5" 
+                        
+                        <Border Margin="5" VerticalAlignment="Center"
                                 DockPanel.Dock="Right"
-                                BorderThickness="1" BorderBrush="LightGray"
-                                Width="160" HorizontalAlignment="Right">
+                                Width="100" HorizontalAlignment="Right">
                             <StackPanel>
-                                <Label Content="Balance" FontSize="10" 
+                                <Label Content="Balance" FontSize="12" 
                                    Padding="1" Foreground="Gray"
-                                   Margin="10,0"/>
-                                <Label Content="{Binding Balance}"
-                                   Margin="5" FontSize="14"/>
+                                   FontWeight="DemiBold" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="USDT " FontSize="12" Foreground="Gray"
+                                           Padding="1" FontWeight="DemiBold"/>
+                                    <Label Content="{Binding Balance}" FontSize="12" 
+                                           Foreground="Gray"
+                                           Padding="1" FontWeight="DemiBold"/>
+                                </StackPanel>
+
                             </StackPanel>
                         </Border>
-                        <Border CornerRadius="5" Margin="5" 
-                                DockPanel.Dock="Right"
-                                BorderThickness="1" BorderBrush="LightGray"
-                                Width="160" HorizontalAlignment="Left">
-                            <StackPanel>
-                                <Label Content="Status" FontSize="10" 
-                                   Padding="1" Foreground="Gray"
-                                   Margin="10,0"/>
-                                <Label Style="{StaticResource ConnectionStatusStyle}"
-                                   Margin="5" FontSize="14"/>
-                            </StackPanel>
+
+                        <Border Margin="5" DockPanel.Dock="Right"
+                                BorderThickness="1,0" BorderBrush="LightGray"
+                                Width="100">
+                            <Button FontSize="10" Padding="0" HorizontalAlignment="Stretch"
+                                    Command="{Binding ConnectCommand}" Height="40" 
+                                    Margin="5,0"
+                                    Style="{StaticResource MaterialDesignFlatButton}">
+                                <DockPanel>
+                                    <Label Content="Status" FontSize="12" DockPanel.Dock="Top"
+                                       Padding="1" Foreground="Gray"
+                                       />
+                                    <Label Style="{StaticResource ConnectionStatusStyle}"
+                                       Padding="1" FontSize="12"/>
+                                </DockPanel>
+                            </Button>
                         </Border>
-                        <Button Content="Connect" FontSize="12" Padding="0,5"
-                                Command="{Binding ConnectCommand}"
-                                Style="{StaticResource MaterialDesignFlatButton}"/>
-                        <Button Content="Test" FontSize="12" Padding="0,5"
-                                Command="{Binding TestCommand}"
-                                Style="{StaticResource MaterialDesignFlatButton}"/>
+
+                        <Border DockPanel.Dock="Right"
+                                Width="60">
+                            <Button Content="Test" FontSize="12" Padding="0,5"
+                                Command="{Binding TestCommand}" Foreground="Gray"
+                                Style="{StaticResource MaterialDesignFlatButton}">
+                            </Button>
+                        </Border>
+
                     </DockPanel>
                 </Grid>
             </Grid>
         </Grid>
+        
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>

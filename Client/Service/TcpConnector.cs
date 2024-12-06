@@ -5,7 +5,6 @@ using ReactiveUI;
 using System.Net.Sockets;
 using System.Reactive.Linq;
 using System.Text;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Client.Service
 {
