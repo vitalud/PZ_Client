@@ -8,14 +8,17 @@ using System.Reactive.Linq;
 
 namespace Client.Service.Abstract
 {
-    public class BurseViewModel : ReactiveObject
+    public partial class BurseViewModel : ReactiveObject
     {
         protected readonly BurseModel _burseModel;
 
         private readonly ReadOnlyObservableCollection<Subscription> _subscriptions;
-        public ReadOnlyObservableCollection<Subscription> Subscriptions => _subscriptions;
+        private Subscription _selectedSub = new();
 
-        private Subscription _selectedSub;
+        private decimal _balance;
+        private bool _isConnected;
+
+        public ReadOnlyObservableCollection<Subscription> Subscriptions => _subscriptions;
         public Subscription SelectedSub
         {
             get => _selectedSub;
@@ -27,27 +30,20 @@ namespace Client.Service.Abstract
                 this.RaisePropertyChanged(nameof(SelectedPositions));
             }
         }
+        public ReadOnlyObservableCollection<Order> SelectedOrders => SelectedSub.OrdersTable;
+        public ReadOnlyObservableCollection<Order> SelectedTrades => SelectedSub.TradesTable;
+        public ReadOnlyObservableCollection<Position> SelectedPositions => SelectedSub.PositionsTable;
 
-        public ReadOnlyObservableCollection<Order> SelectedOrders => SelectedSub?.OrdersTable;
-        public ReadOnlyObservableCollection<Order> SelectedTrades => SelectedSub?.TradesTable;
-        public ReadOnlyObservableCollection<Position> SelectedPositions => SelectedSub?.PositionsTable;
-
-
-        private decimal _balance;
+        public BurseName Name
+        {
+            get => _burseModel.Name;
+            set => _burseModel.Name = value;
+        }
         public decimal Balance
         {
             get => _balance;
             set => this.RaiseAndSetIfChanged(ref _balance, value);
         }
-
-        private BurseName _name;
-        public BurseName Name
-        {
-            get => _name;
-            set => this.RaiseAndSetIfChanged(ref _name, value);
-        }
-
-        private bool _isConnected;
         public bool IsConnected
         {
             get => _isConnected;
@@ -60,19 +56,18 @@ namespace Client.Service.Abstract
         public BurseViewModel(BurseModel burseModel)
         {
             _burseModel = burseModel;
+
             _burseModel.Subscriptions.Connect()
                 .Bind(out _subscriptions)
                 .Subscribe();
 
             Balance = _burseModel.Balance;
-            _burseModel.WhenAnyValue(m => m.Balance)
-                    .Subscribe(value => Balance = value);
-            Name = _burseModel.Name;
-            _burseModel.WhenAnyValue(m => m.Name)
-                    .Subscribe(value => Name = value);
+            _burseModel.WhenAnyValue(x => x.Balance)
+                .Subscribe(value => Balance = value);
+
             IsConnected = _burseModel.IsConnected;
-            _burseModel.WhenAnyValue(m => m.IsConnected)
-                    .Subscribe(value => IsConnected = value);
+            _burseModel.WhenAnyValue(x => x.IsConnected)
+                .Subscribe(value => IsConnected = value);
 
             ConnectCommand = ReactiveCommand.Create(_burseModel.Connect);
             TestCommand = ReactiveCommand.Create(_burseModel.Test);

@@ -1,38 +1,62 @@
 ﻿using ReactiveUI;
-using System.Diagnostics;
 
 namespace Client.Service.Abstract
 {
-    public abstract class Connector : ReactiveObject
+    /// <summary>
+    /// Абстрактный класс, описывающий методы обмена данными с сервером.
+    /// </summary>
+    public abstract class Connector(SubscriptionsRepository subscriptions) : ReactiveObject
     {
-        public event EventHandler<DataReceivedEventArgs> MessageReceived;
-
-        protected readonly SubscriptionsService _subscriptions;
+        protected readonly SubscriptionsRepository _subscriptions = subscriptions;
 
         protected readonly string address = ConfigService.GetIp();
         protected readonly int dataPort = 49107;
         protected readonly int authPort = 29019;
         protected readonly Guid sessionId = Guid.NewGuid();
 
-        public Connector(SubscriptionsService subscriptions)
-        {
-            _subscriptions = subscriptions;
-            MessageReceived += (sender, e) => MessageHandler(e.ReceivedData);
-        }
+        /// <summary>
+        /// Отсылает запрос на аутентификацию на сервере.
+        /// </summary>
+        /// <returns></returns>
+        public abstract Task<bool> Authentication();
 
-        public abstract Task<bool> Authorization();
-        protected abstract Task DataExchange();
+        /// <summary>
+        /// Закрывает обмен данными с сервером.
+        /// TODO: проверить необходимость.
+        /// </summary>
+        /// <returns></returns>
         public abstract Task Close();
+
+        /// <summary>
+        /// Запускает обмен данными после удачной аутентификации.
+        /// </summary>
+        /// <returns></returns>
+        protected abstract Task DataExchange();
+
+        /// <summary>
+        /// Обрабатывает входящие сообщения от сервера.
+        /// </summary>
+        /// <returns></returns>
         protected abstract Task ReceiveData();
-        protected abstract void OnStrategyStatusChanged(string code, bool status);
-        protected abstract void MessageHandler(string message);
-        protected virtual void OnMessageReceived(string data)
-        {
-            MessageReceived?.Invoke(this, new DataReceivedEventArgs(data));
-        }
-    }
-    public class DataReceivedEventArgs(string data) : EventArgs
-    {
-        public string ReceivedData { get; } = data;
+
+        /// <summary>
+        /// Отправляет сообщение на сервер.
+        /// </summary>
+        /// <param name="message">Сообщение от сервера.</param>
+        /// <returns></returns>
+        protected abstract Task SendMessage(string message);
+
+        /// <summary>
+        /// Определяет тип сообщения от сервера и выполняет связанное с ним действие.
+        /// </summary>
+        /// <param name="message">Сообщение от сервера.</param>
+        protected abstract Task MessageHandler(string message);
+
+        /// <summary>
+        /// Отправляет сообщение серверу об изменении статуса подписки.
+        /// </summary>
+        /// <param name="code">Код подписки.</param>
+        /// <param name="status">Статус подписки.</param>
+        protected abstract void OnSubscriptionStatusChanged(string code, bool status);
     }
 }

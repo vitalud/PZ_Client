@@ -4,7 +4,7 @@ using System.Reactive;
 
 namespace Client.ViewModel
 {
-    public class MainViewModel : ReactiveObject
+    public partial class MainViewModel : ReactiveObject
     {
         private readonly MainModel _mainModel;
         private readonly BursesViewModel _burses;
@@ -34,7 +34,7 @@ namespace Client.ViewModel
             _burses = burses;
             _settings = settings;
 
-            CurrentViewModel = burses;
+            _currentViewModel = burses;
 
             CloseCommand = ReactiveCommand.Create(CloseApplication);
             ShowBursesCommand = ReactiveCommand.Create(() => CurrentViewModel = _burses);

@@ -8,6 +8,7 @@ using OKX.Api.Common;
 using OKX.Api.Trade;
 using ProjectZeroLib;
 using ProjectZeroLib.Enums;
+using ProjectZeroLib.Utils;
 using System.Globalization;
 
 namespace Client.Model.Burse
@@ -19,7 +20,7 @@ namespace Client.Model.Burse
         private readonly OkxWebSocketApiOptions _socketClientOptions;
         private readonly OkxWebSocketApiClient _socket;
 
-        public OkxModelTest(SubscriptionsService subscriptions, BurseName name) : base(subscriptions, name)
+        public OkxModelTest(SubscriptionsRepository subscriptions, BurseName name) : base(subscriptions, name)
         {
             _restClientOptions = new OkxRestApiOptions
             {
@@ -49,9 +50,9 @@ namespace Client.Model.Burse
                             var _ = sub.Orders.Items.FirstOrDefault(x => x.ClientOrderId.Equals(order.ClientOrderId));
                             if (_ != null)
                             {
-                                Logger.UiInvoke(() =>
+                                UiInvoker.UiInvoke(() =>
                                 {
-                                    _.Date = order.CreateTime.ToString(dateFormat);
+                                    _.Date = order.CreateTime.ToString(sub.DateFormat);
                                     _.OrderId = order.OrderId.ToString();
                                     _.Status = order.OrderState.ToString();
                                     _.Size = (decimal)order.Quantity;
@@ -63,10 +64,10 @@ namespace Client.Model.Burse
                         {
                             var ord = sub.Orders.Items.FirstOrDefault(x => x.OrderId.Equals(order.OrderId));
                             if (ord != null)
-                                Logger.UiInvoke(() =>
+                                UiInvoker.UiInvoke(() =>
                                 {
                                     ord.Status = "Filled";
-                                    var position = sub.Positions.Items.FirstOrDefault(x => x.InstrumentId.Equals(order.InstrumentId));
+                                    var position = sub.Positions.Items.FirstOrDefault(x => x.Id.Equals(order.InstrumentId));
                                     if (position != null)
                                     {
 
@@ -76,7 +77,7 @@ namespace Client.Model.Burse
                                         sub?.Positions.Add(new Position()
                                         {
                                             TradeId = order.TradeId,
-                                            InstrumentId = order.InstrumentId,
+                                            Id = order.InstrumentId,
                                         });
                                     }
                                 });
@@ -102,11 +103,11 @@ namespace Client.Model.Burse
             {
                 lock (data)
                 {
-                    Logger.UiInvoke(() =>
+                    UiInvoker.UiInvoke(() =>
                     {
                         foreach (var sub in Subscriptions.Items)
                         {
-                            var position = sub.Positions.Items.FirstOrDefault(x => x.InstrumentId.Equals(data.InstrumentId));
+                            var position = sub.Positions.Items.FirstOrDefault(x => x.Id.Equals(data.InstrumentId));
                             if (position != null)
                             {
                                 if (data.Liabilities != null)
@@ -123,7 +124,7 @@ namespace Client.Model.Burse
                                     if (data.AveragePrice != null)
                                         position.Price = (decimal)data.AveragePrice;
                                     if (data.InstrumentId != null)
-                                        position.InstrumentId = data.InstrumentId;
+                                        position.Id = data.InstrumentId;
                                     if (data.UnrealizedProfitAndLoss != null)
                                         position.Profit = (decimal)data.UnrealizedProfitAndLoss;
                                 }
@@ -160,7 +161,7 @@ namespace Client.Model.Burse
             var account = await _socket.Account.SubscribeToPositionUpdatesAsync(OnPositionUpdated, OkxInstrumentType.Any);
             var orders = await _socket.Trade.SubscribeToOrderUpdatesAsync(OnOrderUpdated, OkxInstrumentType.Any);
         }
-        protected override async Task PlaceOrder(SourceList<Order> orders, decimal limit)
+        protected override async Task PlaceOrders(SourceList<Order> orders, decimal limit)
         {
             if (IsConnected)
             {
@@ -178,7 +179,7 @@ namespace Client.Model.Burse
                         OkxTradeOrderSide side = order.Side.Equals("Sell") ? OkxTradeOrderSide.Sell : OkxTradeOrderSide.Buy;
                         _.Add(new()
                         {
-                            InstrumentId = order.InstrumentId,
+                            InstrumentId = order.Id,
                             TradeMode = OkxTradeMode.Cross,
                             OrderSide = side,
                             PositionSide = OkxTradePositionSide.Net,
@@ -194,9 +195,9 @@ namespace Client.Model.Burse
                 }
             }
         }
-        protected override async void UpdateOrderByTime(Order order, SubStockData stock, int position)
+        protected override async void UpdateOrderPrice(Order order, Stock stock, int position)
         {
-            var ticker = await _rest.Public.GetTickerAsync(order.InstrumentId);
+            var ticker = await _rest.Public.GetTickerAsync(order.Id);
             if (ticker.Error != null) return;
             decimal price = 0;
             var mul = stock.PriceStep * stock.Position;
@@ -213,11 +214,11 @@ namespace Client.Model.Burse
             }
             if (order.Price == price) return;
             order.Price = price;
-            await _rest.Trade.AmendOrderAsync(order.InstrumentId, newPrice: order.Price, clientOrderId: order.ClientOrderId);
+            await _rest.Trade.AmendOrderAsync(order.Id, newPrice: order.Price, clientOrderId: order.ClientOrderId);
         }
         protected override async Task ClosePosition(Position position, string clientOrderId)
         {
-            var close = await _rest.Trade.ClosePositionAsync(position.InstrumentId, OkxAccountMarginMode.Cross, currency: "USDT");
+            var close = await _rest.Trade.ClosePositionAsync(position.Id, OkxAccountMarginMode.Cross, currency: "USDT");
         }
         protected async void UpdateTradeLimit(decimal limit, string code)
         {
@@ -230,7 +231,7 @@ namespace Client.Model.Burse
                     bool success;
                     do
                     {
-                        var ticker = await _rest.Public.GetTickerAsync(sub.Stocks[i].InstrumentId);
+                        var ticker = await _rest.Public.GetTickerAsync(sub.Stocks[i].Id);
                         success = ticker.Success;
                         if (success)
                         {
@@ -256,7 +257,7 @@ namespace Client.Model.Burse
                 }
             }
         }
-        protected override bool CheckBalanceOnStart(decimal limit)
+        protected override bool CheckBalance(decimal limit)
         {
             return Balance > limit;
         }
@@ -269,12 +270,12 @@ namespace Client.Model.Burse
 
         public async void ChangeOrderType(Order order)
         {
-            var cansel = await _rest.Trade.CancelOrderAsync(order.InstrumentId, clientOrderId: order.ClientOrderId);
+            var cansel = await _rest.Trade.CancelOrderAsync(order.Id, clientOrderId: order.ClientOrderId);
             if (cansel.Success)
             {
                 OkxTradeMode tdMode = OkxTradeMode.Cross;
                 OkxTradeOrderSide side = order.Side.Equals("Sell") ? OkxTradeOrderSide.Buy : OkxTradeOrderSide.Sell;
-                var trade = await _rest.Trade.PlaceOrderAsync(order.InstrumentId, tdMode, side, OkxTradePositionSide.Net, OkxTradeOrderType.MarketOrder, order.Size, clientOrderId: order.ClientOrderId + 'm');
+                var trade = await _rest.Trade.PlaceOrderAsync(order.Id, tdMode, side, OkxTradePositionSide.Net, OkxTradeOrderType.MarketOrder, order.Size, clientOrderId: order.ClientOrderId + 'm');
             }
         }
 

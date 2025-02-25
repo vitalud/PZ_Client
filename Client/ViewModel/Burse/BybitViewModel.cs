@@ -3,7 +3,5 @@ using Client.Service.Abstract;
 
 namespace Client.ViewModel.Burse
 {
-    public class BybitViewModel(BybitModel bybitModel) : BurseViewModel(bybitModel)
-    {
-    }
+    public partial class BybitViewModel(BybitModel bybitModel) : BurseViewModel(bybitModel) { }
 }

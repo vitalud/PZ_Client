@@ -5,17 +5,15 @@ using System.Collections.ObjectModel;
 
 namespace Client.ViewModel
 {
-    public class BursesViewModel : ReactiveObject
+    public partial class BursesViewModel : ReactiveObject
     {
         private readonly BurseViewModel _okxViewModel;
         private readonly BurseViewModel _binanceViewModel;
         private readonly BurseViewModel _bybitViewModel;
-        private readonly BurseViewModel _quikViewModel;
 
         public BurseViewModel OkxViewModel => _okxViewModel;
         public BurseViewModel BinanceViewModel => _binanceViewModel;
         public BurseViewModel BybitViewModel => _bybitViewModel;
-        public BurseViewModel QuikViewModel => _quikViewModel;
 
         public ObservableCollection<BurseViewModel> BurseViewModels { get; }
 
@@ -32,9 +30,9 @@ namespace Client.ViewModel
             _binanceViewModel = binanceViewModel;
             _bybitViewModel = bybitViewModel;
 
-            BurseViewModels = [_okxViewModel, _binanceViewModel, _bybitViewModel];
+            _currentBurseViewModel = _okxViewModel;
 
-            CurrentBurseViewModel = _okxViewModel;
+            BurseViewModels = [_okxViewModel, _binanceViewModel, _bybitViewModel];
         }
     }
 }

@@ -1,55 +1,62 @@
 ﻿using Binance.Net.Clients;
 using Binance.Net.Enums;
-using Binance.Net.Objects.Models.Futures;
 using Binance.Net.Objects.Models.Futures.Socket;
-using Binance.Net.Objects.Models.Spot.Socket;
 using Client.Service;
 using Client.Service.Abstract;
 using Client.Service.Sub;
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects.Sockets;
 using DynamicData;
-using ProjectZeroLib;
 using ProjectZeroLib.Enums;
+using ProjectZeroLib.Utils;
 
 namespace Client.Model.Burse
 {
-    public class BinanceModel : BurseModel
+    public partial class BinanceModel(SubscriptionsRepository subscriptions, BurseName name) : BurseModel(subscriptions, name)
     {
-        private readonly BinanceRestClient _rest;
-        private readonly BinanceSocketClient _socket;
-
-        private string _listenKey;
-
-        public BinanceModel(SubscriptionsService subscriptions, BurseName name) : base(subscriptions, name)
-        {
-            _rest = new BinanceRestClient(options =>
+        private readonly BinanceRestClient _rest = new(options =>
             {
                 options.OutputOriginalData = true;
                 options.Environment = Binance.Net.BinanceEnvironment.Testnet;
             });
-            _socket = new BinanceSocketClient(options =>
+        private readonly BinanceSocketClient _socket = new(options =>
             {
                 options.OutputOriginalData = true;
                 options.Environment = Binance.Net.BinanceEnvironment.Testnet;
             });
-        }
+
+        private string _listenKey = string.Empty;
+
+        #region Настройка подписок
 
         protected override async Task<bool> GetConnection()
         {
             var api = ConfigService.GetKey("Binance", "Api");
             var secret = ConfigService.GetKey("Binance", "Secret");
             var credentials = new ApiCredentials(api, secret);
+
             _rest.SetApiCredentials(credentials);
             _socket.SetApiCredentials(credentials);
+            _rest.ClientOptions.ApiCredentials = credentials;
+            _socket.ClientOptions.ApiCredentials = credentials;
 
-            var result = false;
-            var ticker = await _rest.UsdFuturesApi.ExchangeData.GetTickerAsync("BTC-USDT");
             var listenKey = await _rest.UsdFuturesApi.Account.StartUserStreamAsync();
             _listenKey = listenKey.Data;
-            var balance = await _socket.UsdFuturesApi.Account.SubscribeToUserDataUpdatesAsync(_listenKey, onAccountUpdate: OnAccountUpdated);
-            if (ticker.Success && balance.Success)
+
+            var result = false;
+            var balance = await _rest.UsdFuturesApi.Account.GetBalancesAsync();
+            var updates = await _socket.UsdFuturesApi.Account.SubscribeToUserDataUpdatesAsync(_listenKey, onAccountUpdate: OnAccountUpdated);
+            if (balance.Success && updates.Success)
             {
+                foreach (var asset in balance.Data)
+                {
+                    if (asset.Asset == "USDT")
+                    {
+                        Balance = asset.AvailableBalance;
+                        break;
+                    }
+                }
+
                 result = true;
                 _ = Task.Run(async () => {
                     while (true)
@@ -63,201 +70,192 @@ namespace Client.Model.Burse
         }
         protected override async Task SetupSocket()
         {
-            var account = await _socket.SpotApi.Account.SubscribeToUserDataUpdatesAsync(_listenKey, onAccountPositionMessage: OnPositionUpdated, onOrderUpdateMessage: OnOrderUpdated);
+            var account = await _socket.UsdFuturesApi.Account.SubscribeToUserDataUpdatesAsync(_listenKey, onOrderUpdate: OnOrderUpdated);
         }
 
-        private void OnOrderUpdated(DataEvent<BinanceStreamOrderUpdate> update)
+        private async void OnOrderUpdated(DataEvent<BinanceFuturesStreamOrderUpdate> update)
         {
-            if (update != null)
+            var data = update.Data.UpdateData;
+
+            if (data == null || data.ClientOrderId == null) return;
+
+            var type = data.ClientOrderId[..2];
+            if (type != "st") return;
+
+            var code = data.ClientOrderId.Substring(2, 4);
+
+            var sub = Subscriptions.Items.FirstOrDefault(x => x.Code == code);
+            if (sub == null) return;
+
+            var order = sub.Orders.Items.FirstOrDefault(x => x.ClientOrderId == data.ClientOrderId);
+            if (order != null)
             {
-                var data = update.Data;
-                if (data.ClientOrderId != null)
+                await UiInvoker.UiInvoke(() => ChangeOrderStatus(data, order, sub));
+                return;
+            }
+
+            var position = sub.Positions.Items.FirstOrDefault(x => x.ClientOrderId == data.ClientOrderId);
+            if (position != null)
+            {
+                CalcProfit(position, data.Price);
+                await UiInvoker.UiInvoke(() => sub.Positions.Remove(position));
+            }
+        }
+        private static void ChangeOrderStatus(BinanceFuturesStreamOrderUpdateData data, Order order, Subscription sub)
+        {
+            if (data.Status == OrderStatus.New)
+            {
+                order.Date = data.UpdateTime.ToString(sub.DateFormat);
+
+                if (order.Status == "Live")
+                    order.Price = data.Price;
+                else
                 {
-                    var sub = Subscriptions.Items.FirstOrDefault(x => data.ClientOrderId.Contains(x.ClientOrderId));
-                    if (sub != null)
-                    {
-                        if (data.Status.Equals(OrderStatus.New))
-                        {
-                            var _ = sub.Orders.Items.FirstOrDefault(x => x.ClientOrderId.Equals(data.ClientOrderId));
-                            if (_ != null)
-                            {
-                                Logger.UiInvoke(() =>
-                                {
-                                    _.Date = data.CreateTime.ToString(dateFormat);
-                                    _.OrderId = data.Id.ToString();
-                                    _.Status = data.Status.ToString();
-                                    _.Size = data.Quantity;
-                                    _.Price = data.Price;
-                                });
-                            }
-                        }
-                        else if (data.Status.Equals(OrderStatus.Filled))
-                        {
-                            var order = sub.Orders.Items.FirstOrDefault(x => x.OrderId.Equals(data.Id));
-                            if (order != null)
-                            {
-                                Logger.UiInvoke(() =>
-                                {
-                                    order.Status = "Filled";
-                                    var position = sub.Positions.Items.FirstOrDefault(x => x.InstrumentId.Equals(data.Symbol));
-                                    if (position == null)
-                                    {
-                                        sub?.Positions.Add(new Position()
-                                        {
-                                            TradeId = order.TradeId,
-                                            InstrumentId = order.InstrumentId,
-                                        });
-                                    }
-                                });
-                            }
-                        }
-                    }
+                    order.Status = "Live";
                 }
+            }
+            else if (data.Status == OrderStatus.Filled)
+            {
+                order.Price = data.PriceLastFilledTrade;
+                order.Date = data.UpdateTime.ToString(sub.DateFormat);
+                order.Status = data.Status.ToString();
+
+                sub.Profit -= data.Fee;
             }
         }
         private void OnAccountUpdated(DataEvent<BinanceFuturesStreamAccountUpdate> update)
         {
-            if (update != null)
-            {
-                var balance = update.Data.UpdateData.Balances.FirstOrDefault(x => x.Asset.Equals("USDT"));
-                if (balance != null)
-                    Balance = balance.WalletBalance;
-                else
-                    Balance = 0;
-            }
-        }
-        private void OnPositionUpdated(DataEvent<BinanceStreamPositionsUpdate> update)
-        {
-            if (update != null)
-            {
-                lock (update)
-                {
-                    Logger.UiInvoke(() =>
-                    {
-                        var data = update.Data;
-                        foreach (var sub in Subscriptions.Items)
-                        {
-                            var position = sub.Positions.Items.FirstOrDefault(x => x.InstrumentId.Equals(update.Symbol));
-                            if (position != null)
-                            {
-                                //if (data.Liabilities != null)
-                                //{
-                                //    position.Quantity = (decimal)data.Liabilities;
-                                //    if (data.Liabilities > 0)
-                                //        position.Side = "Buy";
-                                //    else
-                                //    {
-                                //        position.Side = "Sell";
-                                //        position.Quantity *= -1;
-                                //    }
+            if (update == null) return;
 
-                                //    if (data.AveragePrice != null)
-                                //        position.Price = (decimal)data.AveragePrice;
-                                //    if (data.Symbol != null)
-                                //        position.InstrumentId = data.Symbol;
-                                //    if (data.UnrealizedProfitAndLoss != null)
-                                //        position.Profit = (decimal)data.UnrealizedProfitAndLoss;
-                                //}
-                                //else
-                                //{
-                                //    sub.Positions.Remove(position);
-                                //}
-                            }
-                            else
-                                continue;
-                        }
-
-                    });
-                }
-            }
+            var balance = update.Data.UpdateData.Balances.FirstOrDefault(x => x.Asset.Equals("USDT"));
+            if (balance != null)
+                Balance = balance.WalletBalance;
         }
 
-        protected override async Task PlaceOrder(SourceList<Order> orders, decimal limit)
+        #endregion
+
+        #region Реализации делегатов
+
+        protected override async Task PlaceOrders(SourceList<Order> orders)
         {
-            if (IsConnected)
-            {
-                if (Balance > limit)
-                {
-                    List<BinanceFuturesBatchOrder> _ = [];
+            if (!IsConnected) return;
 
-                    foreach (var order in orders.Items)
-                    {
-                        order.Size = Math.Round(0.995m * limit / (orders.Count * order.Price), 5);
-                    }
+            var tasks = orders.Items.Select(PlaceOrder);
 
-                    foreach (var order in orders.Items)
-                    {
-                        OrderSide side = order.Side.Equals("Sell") ? OrderSide.Sell : OrderSide.Buy;
-                        _.Add(new()
-                        {
-                            Symbol = order.InstrumentId,
-                            Type = FuturesOrderType.Limit,
-                            Side = side,
-                            //TradeMode = TradeMode.Cross,
-                            PositionSide = PositionSide.Both,
-                            Quantity = order.Size,
-                            Price = order.Price,
-                            //Asset = "USDT",
-                            NewClientOrderId = order.ClientOrderId,
-
-                        });
-                    }
-                    var trade = await _rest.UsdFuturesApi.Trading.PlaceMultipleOrdersAsync(_);
-                }
-            }
+            await Task.WhenAll(tasks);
         }
-        protected override async void UpdateOrderByTime(Order order, SubStockData stock, int position)
+        protected override async Task CloseOrders(SourceList<Order> orders)
         {
-            var ticker = await _rest.SpotApi.ExchangeData.GetTickerAsync(order.InstrumentId);
-            if (ticker.Error != null) return;
+            if (!IsConnected) return;
+
+            var tasks = orders.Items.Select(CloseOrder);
+
+            await Task.WhenAll(tasks);
+        }
+        protected override async Task<decimal> GetTickerPrice(Order order, int pos)
+        {
             decimal price = 0;
-            var mul = stock.PriceStep * stock.Position;
+            bool success;
 
-            OrderSide side = order.Side.Equals("Sell") ? OrderSide.Sell : OrderSide.Buy;
+            do
+            {
+                var ticker = await _rest.UsdFuturesApi.ExchangeData.GetTickerAsync(order.Id);
+                success = ticker.Success;
+                if (success)
+                {
+                    price = ticker.Data.LastPrice;
+                }
+            }
+            while (!success);
 
-            if (side.Equals(OrderSide.Sell))
-            {
-                if (ticker.Data.BestAskPrice != null)
-                    price = ticker.Data.BestAskPrice + mul;
-            }
-            else if (side.Equals(OrderSide.Buy))
-            {
-                if (ticker.Data.BestBidPrice != null)
-                    price = ticker.Data.BestBidPrice - mul;
-            }
-            if (order.Price == price) return;
-            order.Price = price;
-            await _rest.SpotApi.Trading.CancelOrderAsync(order.InstrumentId, orderId: long.Parse(order.OrderId), newClientOrderId: order.ClientOrderId);
-            await _rest.SpotApi.Trading.PlaceOrderAsync(order.InstrumentId, side, SpotOrderType.Limit, quantity: order.Size, price: order.Price, newClientOrderId: order.ClientOrderId);
+            return price;
+
         }
-        protected override async Task ClosePosition(Position position, string clientOrderId)
+        protected override async Task UpdateOrderPrice(Order order)
         {
-            //var close = await _rest.UsdFuturesApi.Trading.ClosePositionAsync(position.InstrumentId, MarginMode.Cross);
+            var side = order.Side == Side.Sell ? OrderSide.Sell : OrderSide.Buy;
+
+            var cancel = await _rest.UsdFuturesApi.Trading.CancelOrderAsync(
+                symbol: order.Id,
+                origClientOrderId: order.ClientOrderId);
+
+            if (cancel.Error != null) return;
+            else
+            {
+                var update = await _rest.UsdFuturesApi.Trading.PlaceOrderAsync(
+                    symbol: order.Id,
+                    side: side, 
+                    type: FuturesOrderType.Limit, 
+                    quantity: order.Size, 
+                    price: order.Price, 
+                    timeInForce: TimeInForce.GoodTillCanceled,
+                    newClientOrderId: order.ClientOrderId);
+
+                if (update.Error != null)
+                {
+
+                }
+            }
         }
-        protected override bool CheckBalanceOnStart(decimal limit)
+        protected override async Task ClosePositions(SourceList<Position> positions)
         {
-            return Balance > limit;
+            if (!IsConnected) return;
+
+            var tasks = positions.Items.Select(ClosePosition);
+
+            await Task.WhenAll(tasks);
         }
+
+        #endregion
+
+        public async Task PlaceOrder(Order order)
+        {
+            var side = order.Side == Side.Sell ? OrderSide.Sell : OrderSide.Buy;
+
+            var trade = await _rest.UsdFuturesApi.Trading.PlaceOrderAsync(
+                symbol: order.Id,
+                side: side,
+                type: FuturesOrderType.Limit,
+                quantity: order.Size,
+                price: order.Price,
+                positionSide: PositionSide.Both,
+                timeInForce: TimeInForce.GoodTillCanceled,
+                newClientOrderId: order.ClientOrderId);
+
+            if (trade.Error != null)
+            {
+
+            }
+        }
+        public async Task CloseOrder(Order order)
+        {
+            var trade = await _rest.UsdFuturesApi.Trading.CancelOrderAsync(
+                symbol: order.Id,
+                origClientOrderId: order.ClientOrderId);
+        }
+        public async Task ClosePosition(Position position)
+        {
+            var side = position.Side == Side.Sell ? OrderSide.Buy : OrderSide.Sell;
+
+            var trade = await _rest.UsdFuturesApi.Trading.PlaceOrderAsync(
+                symbol: position.Id,
+                side: side,
+                type: FuturesOrderType.Market,
+                quantity: position.Size,
+                price: position.Price,
+                positionSide: PositionSide.Both,
+                newClientOrderId: position.ClientOrderId);
+        }
+
         protected async Task<bool> SetLeverageOnStart(int lever, string instId)
         {
             //var leverage = await _rest.UsdFuturesApi.Trading.SetLeverageAsync(lever, MarginMode.Cross, symbol: instId, positionSide: PositionSide.Net);
             //while (leverage.Error != null) leverage = await _rest.UnifiedApi.Account.SetLeverageAsync(lever, MarginMode.Cross, symbol: instId, positionSide: PositionSide.Net);
             return true;
         }
-
-        /// <summary>
-        /// Выставление ордера по рынку в случае, если 
-        /// заявка не исполнилась до получения нового сигнала.
-        /// </summary>
-        public async void ChangeOrderType(Order order)
+        protected override void CalcProfit(Position position, decimal price)
         {
-            var cansel = await _rest.UsdFuturesApi.Trading.CancelOrderAsync(order.InstrumentId, orderId: long.Parse(order.OrderId));
-            if (cansel.Success)
-            {
-                //TradeMode tdMode = TradeMode.Cross;
-                OrderSide side = order.Side.Equals("Sell") ? OrderSide.Buy : OrderSide.Sell;
-                var trade = await _rest.UsdFuturesApi.Trading.PlaceOrderAsync(order.InstrumentId, side, FuturesOrderType.Market, order.Size, positionSide: PositionSide.Both, newClientOrderId: order.ClientOrderId + 'm');
-            }
+             position.Profit = (price - position.Price) * position.Size;
         }
 
         public override async void Test()
@@ -287,8 +285,7 @@ namespace Client.Model.Burse
 
         private async Task Test001()
         {
-            var trade = await _rest.UsdFuturesApi.Trading.PlaceOrderAsync("BTC-USDT", OrderSide.Sell, FuturesOrderType.Market, 0.00001m, price: 68666, positionSide: PositionSide.Both, newClientOrderId: "VitalUd00020");
+
         }
     }
-
 }

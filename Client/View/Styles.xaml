@@ -16,6 +16,7 @@
             </DataTrigger>
         </Style.Triggers>
     </Style>
+    
     <Style x:Key="DataGridOrderSideStyle" BasedOn="{StaticResource MaterialDesignDataGridCell}" TargetType="DataGridCell">
         <Setter Property="Background" Value="Transparent"/>
         <Style.Triggers>
@@ -27,15 +28,21 @@
             </DataTrigger>
         </Style.Triggers>
     </Style>
+    
     <Style x:Key="DataGridStyle" BasedOn="{StaticResource MaterialDesignDataGrid}" TargetType="DataGrid">
+        <Setter Property="ColumnWidth" Value="*"/>
+        <Setter Property="RowHeaderWidth" Value="0"/>
         <Setter Property="AutoGenerateColumns" Value="False"/>
         <Setter Property="CanUserAddRows" Value="False"/>
         <Setter Property="CanUserDeleteRows" Value="False"/>
-        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
-        <Setter Property="VerticalAlignment" Value="Top"/>
-        <Setter Property="HorizontalGridLinesBrush" Value="Transparent"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="WhiteSmoke"/>
         <Setter Property="VerticalGridLinesBrush" Value="WhiteSmoke"/>
-        <Setter Property="ColumnWidth" Value="*"/>
+        <Setter Property="VerticalAlignment" Value="Top"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="CanUserResizeColumns" Value="False"/>
+        <Setter Property="CanUserResizeRows" Value="False"/>
         <Setter Property="materialDesign:DataGridAssist.CellPadding" Value="10 5 10 5"/>
         <Setter Property="materialDesign:DataGridAssist.ColumnHeaderPadding" Value="10 5 10 5"/>
         <Setter Property="materialDesign:DataGridAssist.CornerRadius" Value="3"/>

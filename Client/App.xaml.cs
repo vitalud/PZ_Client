@@ -41,7 +41,7 @@ namespace Client
             builder.RegisterType<MainView>().AsSelf()
                 .OnActivating(eventArgs => eventArgs.Instance.DataContext = eventArgs.Context.Resolve<MainViewModel>());
 
-            builder.RegisterType<SubscriptionsService>().AsSelf().SingleInstance();
+            builder.RegisterType<SubscriptionsRepository>().AsSelf().SingleInstance();
 
             builder.RegisterType<SettingsModel>().AsSelf().SingleInstance();
             builder.RegisterType<SettingsViewModel>().AsSelf().SingleInstance();
@@ -52,7 +52,10 @@ namespace Client
             var container = builder.Build();
 
             using var scope = container.BeginLifetimeScope();
+
             var mainWindow = scope.Resolve<MainView>();
+
+            //mainWindow.ShowDialog();
 
             var authWindow = scope.Resolve<AuthView>();
             authWindow.ShowDialog();

@@ -1,20 +1,13 @@
-﻿using Client.Service;
-using Client.Service.Abstract;
+﻿using Client.Service.Abstract;
 
 namespace Client.Model
 {
-    public class MainModel
+    /// <summary>
+    /// Класс, представляющий собой основную модель приложения
+    /// </summary>
+    public class MainModel(Connector connector)
     {
-        private readonly Connector _connector;
-        private readonly BursesModel _burses;
-        private readonly SubscriptionsService _subscriptions;
-
-        public MainModel(Connector connector, BursesModel burses, SubscriptionsService subscriptions)
-        {
-            _connector = connector;
-            _burses = burses;
-            _subscriptions = subscriptions;
-        }
+        private readonly Connector _connector = connector;
 
         public void CloseApplication()
         {

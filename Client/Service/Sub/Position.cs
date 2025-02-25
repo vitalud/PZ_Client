@@ -1,51 +1,34 @@
-﻿using ReactiveUI;
+﻿using ProjectZeroLib.Enums;
+using ReactiveUI;
 
 namespace Client.Service.Sub
 {
-    public class Position : ReactiveObject
+    /// <summary>
+    /// Класс, описывающий информацию по позиции в подписке.
+    /// TODO: исправить на самостоятельный расчет.
+    /// </summary>
+    public partial class Position(string id, string type, BurseName burse, decimal size, Side side, string clientOrderId) : ReactiveObject
     {
-        private long? _tradeId;
         private decimal _price;
-        private decimal _quantity;
-        private string _instrumentId = string.Empty;
-        private string _side = string.Empty;
         private decimal _profit;
-        private long? _ticks;
 
-        public long? TradeId
-        {
-            get => _tradeId;
-            set => this.RaiseAndSetIfChanged(ref _tradeId, value);
-        }
+        public string Id { get; } = id;
+        public string Type { get; } = type;
+        public BurseName Burse { get; } = burse;
+        public decimal Size { get; } = size;
+        public Side Side { get; } = side;
+        public string ClientOrderId { get; } = clientOrderId;
+
         public decimal Price
         {
             get => _price;
             set => this.RaiseAndSetIfChanged(ref _price, value);
         }
-        public decimal Quantity
-        {
-            get => _quantity;
-            set => this.RaiseAndSetIfChanged(ref _quantity, value);
-        }
-        public string InstrumentId
-        {
-            get => _instrumentId;
-            set => this.RaiseAndSetIfChanged(ref _instrumentId, value);
-        }
-        public string Side
-        {
-            get => _side;
-            set => this.RaiseAndSetIfChanged(ref _side, value);
-        }
+
         public decimal Profit
         {
             get => _profit;
             set => this.RaiseAndSetIfChanged(ref _profit, value);
-        }
-        public long? Ticks
-        {
-            get => _ticks;
-            set => this.RaiseAndSetIfChanged(ref _ticks, value);
         }
     }
 }

@@ -3,15 +3,19 @@ using ReactiveUI;
 
 namespace Client.Model
 {
-    public class SettingsModel : ReactiveObject
+    /// <summary>
+    /// Класс, представляющий собой настройки приложения.
+    /// Реализованы только хранения ключей.
+    /// </summary>
+    public partial class SettingsModel : ReactiveObject
     {
-        private string _okxApi;
-        private string _okxSecret;
-        private string _okxWord;
-        private string _binanceApi;
-        private string _binanceSecret;
-        private string _bybitApi;
-        private string _bybitSecret;
+        private string _okxApi = string.Empty;
+        private string _okxSecret = string.Empty;
+        private string _okxWord = string.Empty;
+        private string _binanceApi = string.Empty;
+        private string _binanceSecret = string.Empty;
+        private string _bybitApi = string.Empty;
+        private string _bybitSecret = string.Empty;
 
         public string OkxApi
         {
@@ -49,6 +53,9 @@ namespace Client.Model
             set => this.RaiseAndSetIfChanged(ref _bybitSecret, value);
         }
 
+        /// <summary>
+        /// Считывает ключи из конфига.
+        /// </summary>
         public SettingsModel()
         {
             OkxApi = ConfigService.GetKey("Okx", "Api");
@@ -60,6 +67,9 @@ namespace Client.Model
             BybitSecret = ConfigService.GetKey("Bybit", "Secret");
         }
 
+        /// <summary>
+        /// Сохраняет ключи в конфиг.
+        /// </summary>
         public void SaveKeys()
         {
             ConfigService.SetKey("Okx", "Api", OkxApi);

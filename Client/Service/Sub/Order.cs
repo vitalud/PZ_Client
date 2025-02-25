@@ -1,32 +1,53 @@
-﻿using ReactiveUI;
+﻿using ProjectZeroLib.Enums;
+using ReactiveUI;
 
 namespace Client.Service.Sub
 {
     /// <summary>
-    /// Класс информации по ордеру конкретной стратегии.
+    /// Класс, описывающий информацию по ордеру в подписке.
+    /// Совмещает функцию отображения сделок в подписке.
     /// </summary>
-    public class Order : ReactiveObject
+    public partial class Order(string id, string type, BurseName burse, string clientOrderId, Side side, decimal priceStep) : ReactiveObject
     {
-        private string _title = string.Empty;
         private string _date = string.Empty;
-        private string _clientOrderId = string.Empty;
-        private string _orderId = string.Empty;
-        private long? _tradeId;
         private string _status = string.Empty;
-        private string _instrumentType = string.Empty;
-        private string _instrumentId = string.Empty;
-        private decimal _size;
-        private string _side = string.Empty;
         private decimal _price;
+        private decimal _size;
 
         /// <summary>
-        /// Заголовок таблицы.
+        /// Имя инструмента.
         /// </summary>
-        public string Title
-        {
-            get => _title;
-            set => this.RaiseAndSetIfChanged(ref _title, value);
-        }
+        public string Id { get; } = id;
+
+        /// <summary>
+        /// Тип инструмента.
+        /// </summary>
+        public string Type { get; } = type;
+
+        /// <summary>
+        /// Биржа инструмента.
+        /// </summary>
+        public BurseName Burse { get; } = burse;
+
+        /// <summary>
+        /// Id ордера на бирже, создаваемый стратегией.
+        /// </summary>
+        public string ClientOrderId { get; } = clientOrderId;
+
+        /// <summary>
+        /// Id ордера на бирже, создаваемый биржей.
+        /// </summary>
+        public string OrderId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Сторона ордера (купля или продажа).
+        /// </summary>
+        public Side Side { get; } = side;
+
+        /// <summary>
+        /// Шаг цены.
+        /// </summary>
+        public decimal PriceStep { get; } = priceStep;
 
         /// <summary>
         /// Время размещения/исполнения ордера.
@@ -35,33 +56,6 @@ namespace Client.Service.Sub
         {
             get => _date;
             set => this.RaiseAndSetIfChanged(ref _date, value);
-        }
-
-        /// <summary>
-        /// Id ордера на бирже, создаваемый стратегией.
-        /// </summary>
-        public string ClientOrderId
-        {
-            get => _clientOrderId;
-            set => this.RaiseAndSetIfChanged(ref _clientOrderId, value);
-        }
-
-        /// <summary>
-        /// Id ордера на бирже, создаваемый биржей.
-        /// </summary>
-        public string OrderId
-        {
-            get => _orderId;
-            set => this.RaiseAndSetIfChanged(ref _orderId, value);
-        }
-
-        /// <summary>
-        /// Id трейда на бирже.
-        /// </summary>
-        public long? TradeId
-        {
-            get => _tradeId;
-            set => this.RaiseAndSetIfChanged(ref _tradeId, value);
         }
 
         /// <summary>
@@ -74,21 +68,12 @@ namespace Client.Service.Sub
         }
 
         /// <summary>
-        /// Тип инструмента.
+        /// Цена инструмента по ордеру.
         /// </summary>
-        public string InstrumentType
+        public decimal Price
         {
-            get => _instrumentType;
-            set => this.RaiseAndSetIfChanged(ref _instrumentType, value);
-        }
-
-        /// <summary>
-        /// Имя инструмента.
-        /// </summary>
-        public string InstrumentId
-        {
-            get => _instrumentId;
-            set => this.RaiseAndSetIfChanged(ref _instrumentId, value);
+            get => _price;
+            set => this.RaiseAndSetIfChanged(ref _price, value);
         }
 
         /// <summary>
@@ -99,24 +84,5 @@ namespace Client.Service.Sub
             get => _size;
             set => this.RaiseAndSetIfChanged(ref _size, value);
         }
-
-        /// <summary>
-        /// Сторона ордера (купля или продажа).
-        /// </summary>
-        public string Side
-        {
-            get => _side;
-            set => this.RaiseAndSetIfChanged(ref _side, value);
-        }
-
-        /// <summary>
-        /// Цена инструмента по ордеру.
-        /// </summary>
-        public decimal Price
-        {
-            get => _price;
-            set => this.RaiseAndSetIfChanged(ref _price, value);
-        }
     }
-
 }
