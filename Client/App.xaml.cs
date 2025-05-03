@@ -1,14 +1,13 @@
 ﻿using Autofac;
 using Client.Model;
-using Client.Model.Burse;
+using Client.Model.Crypto;
 using Client.Service;
 using Client.Service.Abstract;
 using Client.View.Window;
 using Client.ViewModel;
-using Client.ViewModel.Burse;
+using Client.ViewModel.Crypto;
 using ProjectZeroLib.Enums;
-using ReactiveUI;
-using System.Reactive.Linq;
+using Serilog;
 using System.Windows;
 
 namespace Client
@@ -18,57 +17,65 @@ namespace Client
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            LoggerConfig.Configure();
             var builder = new ContainerBuilder();
+            builder.RegisterInstance(Log.Logger).As<ILogger>().SingleInstance();
 
             builder.RegisterType<TcpConnector>().As<Connector>().SingleInstance();
 
             builder.RegisterType<AuthModel>().SingleInstance();
             builder.RegisterType<AuthViewModel>().SingleInstance();
-            builder.RegisterType<AuthView>()
-                .OnActivating(eventArgs => eventArgs.Instance.DataContext = eventArgs.Context.Resolve<AuthViewModel>());
+            builder.RegisterType<AuthView>().AsSelf();
 
             builder.RegisterType<OkxModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Okx);
             builder.RegisterType<OkxViewModel>().AsSelf().SingleInstance();
 
-            builder.RegisterType<BinanceModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Binance); ;
+            builder.RegisterType<BinanceModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Binance);
             builder.RegisterType<BinanceViewModel>().AsSelf().SingleInstance();
 
-            builder.RegisterType<BybitModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Bybit); ;
+            builder.RegisterType<BybitModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Bybit);
             builder.RegisterType<BybitViewModel>().AsSelf().SingleInstance();
+
+            builder.RegisterType<QuikModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Quik);
+            builder.RegisterType<QuikViewModel>().AsSelf().SingleInstance();
+
+            builder.RegisterType<MultiCryptoModel>().AsSelf().SingleInstance().WithParameter("name", BurseName.Multi); ;
+            builder.RegisterType<MultiCryptoViewModel>().AsSelf().SingleInstance();
 
             builder.RegisterType<MainModel>().AsSelf().SingleInstance();
             builder.RegisterType<MainViewModel>().AsSelf().SingleInstance();
-            builder.RegisterType<MainView>().AsSelf()
-                .OnActivating(eventArgs => eventArgs.Instance.DataContext = eventArgs.Context.Resolve<MainViewModel>());
+            builder.RegisterType<MainView>().AsSelf();
 
             builder.RegisterType<SubscriptionsRepository>().AsSelf().SingleInstance();
 
             builder.RegisterType<SettingsModel>().AsSelf().SingleInstance();
             builder.RegisterType<SettingsViewModel>().AsSelf().SingleInstance();
 
-            builder.RegisterType<BursesModel>().AsSelf().SingleInstance();
-            builder.RegisterType<BursesViewModel>().AsSelf().SingleInstance();
+            builder.RegisterType<CryptosViewModel>().AsSelf().SingleInstance();
 
             var container = builder.Build();
 
-            using var scope = container.BeginLifetimeScope();
+            var mainvm = container.Resolve<MainViewModel>();
+            var mainWindow = container.Resolve<MainView>();
+            mainWindow.DataContext = mainvm;
 
-            var mainWindow = scope.Resolve<MainView>();
+            var authvm = container.Resolve<AuthViewModel>();
+            var authWindow = container.Resolve<AuthView>();
+            authWindow.DataContext = authvm;
 
-            //mainWindow.ShowDialog();
-
-            var authWindow = scope.Resolve<AuthView>();
-            authWindow.ShowDialog();
-
-            var mainViewModel = scope.Resolve<MainViewModel>();
-            mainViewModel.WhenAnyValue(x => x.ApplicationClosing)
-                .Where(closing => closing)
-                .Subscribe(_ => mainWindow.Close());
-
-            if ((bool)authWindow.DialogResult)
+            authvm.Authenticated += (sender, args) =>
+            {
+                authWindow.Close();
                 mainWindow.ShowDialog();
-            else
-                mainWindow.Close();
+            };
+            authvm.CloseRequested += (sender, args) =>
+            {
+                authWindow.Close();
+                Current.Shutdown();
+            };
+
+            authWindow.ShowDialog();
         }
     }
 }

@@ -8,51 +8,22 @@ namespace Client.Model
     /// <summary>
     /// Класс, представляющий собой авторизацию клиента.
     /// </summary>
-    public partial class AuthModel : ReactiveObject
+    /// <remarks>
+    /// Получает логин и пароль из конфига.
+    /// </remarks>
+    /// <param name="сonnector"></param>
+    public partial class AuthModel(Connector сonnector) : ReactiveObject
     {
-        private readonly Connector _сonnector;
+        private readonly Connector _сonnector = сonnector;
 
-        private string _login = string.Empty;
-        private string _password = string.Empty;
-        private bool _rememberMe;
-
-        /// <summary>
-        /// Логин клиента.
-        /// </summary>
-        public string Login
+        public static string LoadLogin()
         {
-            get => _login;
-            set => this.RaiseAndSetIfChanged(ref _login, value);
+            return ConfigService.GetLogin();
         }
 
-        /// <summary>
-        /// Пароль клиента.
-        /// </summary>
-        public string Password
+        public static string LoadPassword()
         {
-            get => _password;
-            set => this.RaiseAndSetIfChanged(ref _password, value);
-        }
-
-        /// <summary>
-        /// Запомнить данные клиента.
-        /// </summary>
-        public bool RememberMe
-        {
-            get => _rememberMe;
-            set => this.RaiseAndSetIfChanged(ref _rememberMe, value);
-        }
-
-        /// <summary>
-        /// Получает логин и пароль из конфига.
-        /// </summary>
-        /// <param name="сonnector"></param>
-        public AuthModel(Connector сonnector)
-        {
-            _сonnector = сonnector;
-
-            Login = ConfigService.GetLogin();
-            Password = ConfigService.GetPassword();
+            return ConfigService.GetPassword();
         }
 
         /// <summary>
@@ -61,13 +32,17 @@ namespace Client.Model
         /// при <see cref="RememberMe"/> = true.
         /// </summary>
         /// <returns></returns>
-        public async Task<bool> Authentication()
+        public async Task<bool> Authenticate(string login, string password, bool rememberMe)
         {
-            if (!CheckAuthData()) return false;
+            if (!CheckAuthData(login, password)) return false;
 
-            bool result = await _сonnector.Authentication();
-            if (result && RememberMe)
+            bool result = await _сonnector.Authentication(login, password);
+            if (result && rememberMe)
+            {
+                ConfigService.SetLogin(login);
+                ConfigService.SetPassword(password);
                 ConfigService.Save();
+            }
 
             return result;
         }
@@ -76,22 +51,18 @@ namespace Client.Model
         /// Проверяет через регулярное выражение введенные логин и пароль.
         /// </summary>
         /// <returns></returns>
-        private bool CheckAuthData()
+        private static bool CheckAuthData(string login, string password)
         {
-            bool result = false;
+            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password)) return false;
 
-            if (!string.IsNullOrEmpty(Login) && !string.IsNullOrEmpty(Password))
+            var regex = new Regex(@"(\W)");
+
+            if (!regex.IsMatch(login + password))
             {
-                var regex = new Regex(@"(\W)");
-                if (!regex.IsMatch(Login + Password))
-                {
-                    result = true;
-                    ConfigService.SetLogin(Login);
-                    ConfigService.SetPassword(Password);
-                }
+                return true;
             }
 
-            return result;
+            return false;
         }
     }
 }

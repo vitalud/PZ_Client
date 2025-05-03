@@ -1,16 +1,18 @@
 ﻿<Application x:Class="Client.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
              >
+    
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml" />
-                <materialDesign:BundledTheme BaseTheme="Inherit"
-                                             ColorAdjustment="{materialDesign:ColorAdjustment}"
-                                             PrimaryColor="Grey"
-                                             SecondaryColor="Teal"/>
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+                <md:BundledTheme BaseTheme="Inherit" 
+                                ColorAdjustment="{md:ColorAdjustment}"
+                                PrimaryColor="Grey"
+                                SecondaryColor="Teal"/>
+                <!--<materialDesign:CustomColorTheme PrimaryColor="LightGray" SecondaryColor="LightBlue" BaseTheme="Inherit" ColorAdjustment="{md:ColorAdjustment}"/>-->
                 <ResourceDictionary Source="View/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

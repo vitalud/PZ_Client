@@ -1,13 +1,15 @@
 ﻿using ReactiveUI;
+using Serilog;
 
 namespace Client.Service.Abstract
 {
     /// <summary>
     /// Абстрактный класс, описывающий методы обмена данными с сервером.
     /// </summary>
-    public abstract class Connector(SubscriptionsRepository subscriptions) : ReactiveObject
+    public abstract class Connector(SubscriptionsRepository subscriptions, ILogger logger) : ReactiveObject
     {
         protected readonly SubscriptionsRepository _subscriptions = subscriptions;
+        protected readonly ILogger _logger = logger;
 
         protected readonly string address = ConfigService.GetIp();
         protected readonly int dataPort = 49107;
@@ -18,7 +20,7 @@ namespace Client.Service.Abstract
         /// Отсылает запрос на аутентификацию на сервере.
         /// </summary>
         /// <returns></returns>
-        public abstract Task<bool> Authentication();
+        public abstract Task<bool> Authentication(string login, string password);
 
         /// <summary>
         /// Закрывает обмен данными с сервером.
@@ -31,13 +33,13 @@ namespace Client.Service.Abstract
         /// Запускает обмен данными после удачной аутентификации.
         /// </summary>
         /// <returns></returns>
-        protected abstract Task DataExchange();
+        protected abstract Task DataExchange(CancellationToken cancellationToken);
 
         /// <summary>
         /// Обрабатывает входящие сообщения от сервера.
         /// </summary>
         /// <returns></returns>
-        protected abstract Task ReceiveData();
+        protected abstract Task ReceiveData(CancellationToken cancellationToken);
 
         /// <summary>
         /// Отправляет сообщение на сервер.

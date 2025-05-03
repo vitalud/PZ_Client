@@ -8,43 +8,61 @@ namespace Client.ViewModel
     {
         private readonly AuthModel _authModel;
 
-        private bool _isConnected = false;
-        public bool IsConnected
-        {
-            get => _isConnected;
-            set => this.RaiseAndSetIfChanged(ref _isConnected, value);
-        }
+        private string _login;
+        private string _password;
+        private bool _rememberMe;
+        private bool _isAuthenticated;
 
         public string Login
         {
-            get => _authModel.Login;
-            set => _authModel.Login = value;
+            get => _login;
+            set => this.RaiseAndSetIfChanged(ref _login, value);
         }
-
         public string Password
         {
-            get => _authModel.Password;
-            set => _authModel.Password = value;
+            get => _password;
+            set => this.RaiseAndSetIfChanged(ref _password, value);
         }
-
         public bool RememberMe
         {
-            get => _authModel.RememberMe;
-            set => _authModel.RememberMe = value;
+            get => _rememberMe;
+            set => this.RaiseAndSetIfChanged(ref _rememberMe, value);
+        }
+        public bool IsAuthenticated
+        {
+            get => _isAuthenticated;
+            private set => this.RaiseAndSetIfChanged(ref _isAuthenticated, value);
         }
 
-        public ReactiveCommand<Unit, Unit> ConnectCommand { get; }
+        public event EventHandler Authenticated = delegate { };
+        public event EventHandler CloseRequested = delegate { };
+
+        public ReactiveCommand<Unit, Unit> AuthenticateCommand { get; }
+        public ReactiveCommand<Unit, Unit> CloseCommand { get; }
 
         public AuthViewModel(AuthModel authModel)
         {
             _authModel = authModel;
 
-            ConnectCommand = ReactiveCommand.CreateFromTask(Connect);
+            _login = AuthModel.LoadLogin();
+            _password = AuthModel.LoadPassword();
+
+            AuthenticateCommand = ReactiveCommand.CreateFromTask(Authenticate);
+            CloseCommand = ReactiveCommand.Create(OnClose);
         }
 
-        private async Task Connect()
+        private async Task Authenticate()
         {
-            IsConnected = await _authModel.Authentication();
+            if (await _authModel.Authenticate(Login, Password, RememberMe))
+            {
+                IsAuthenticated = true;
+                Authenticated?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        private void OnClose()
+        {
+            CloseRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 }

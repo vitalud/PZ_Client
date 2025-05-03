@@ -7,13 +7,16 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="View\UserControls\BurseControl.xaml.cs">
+    <Compile Update="View\UserControls\CryptoControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="View\UserControls\BursesControl.xaml.cs">
+    <Compile Update="View\UserControls\CryptosControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="View\UserControls\SettingsControl.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="View\UserControls\SubscriptionsControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
@@ -21,10 +24,10 @@
     <Page Update="View\Styles.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="View\UserControls\BurseControl.xaml">
+    <Page Update="View\UserControls\CryptoControl.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="View\UserControls\BursesControl.xaml">
+    <Page Update="View\UserControls\CryptosControl.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="View\Page\OkxView.xaml">

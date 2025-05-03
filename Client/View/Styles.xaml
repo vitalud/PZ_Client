@@ -28,14 +28,35 @@
             </DataTrigger>
         </Style.Triggers>
     </Style>
-    
+
+    <Style x:Key="ConnectionStatusStyle" TargetType="Label">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                <Setter Property="Content" Value="Connected"/>
+                <Setter Property="Foreground" Value="Green"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                <Setter Property="Content" Value="Disconnected"/>
+                <Setter Property="Foreground" Value="Red"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="VerticalLineBorderStyle" TargetType="Border">
+        <Setter Property="Width" Value="1" />
+        <Setter Property="Background" Value="LightGray" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Margin" Value="2" />
+    </Style>
+
     <Style x:Key="DataGridStyle" BasedOn="{StaticResource MaterialDesignDataGrid}" TargetType="DataGrid">
         <Setter Property="ColumnWidth" Value="*"/>
+        <Setter Property="ColumnHeaderHeight" Value="30"/>
         <Setter Property="RowHeaderWidth" Value="0"/>
         <Setter Property="AutoGenerateColumns" Value="False"/>
         <Setter Property="CanUserAddRows" Value="False"/>
         <Setter Property="CanUserDeleteRows" Value="False"/>
-        <Setter Property="HorizontalGridLinesBrush" Value="WhiteSmoke"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="Transparent"/>
         <Setter Property="VerticalGridLinesBrush" Value="WhiteSmoke"/>
         <Setter Property="VerticalAlignment" Value="Top"/>
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
@@ -43,12 +64,17 @@
         <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
         <Setter Property="CanUserResizeColumns" Value="False"/>
         <Setter Property="CanUserResizeRows" Value="False"/>
-        <Setter Property="materialDesign:DataGridAssist.CellPadding" Value="10 5 10 5"/>
-        <Setter Property="materialDesign:DataGridAssist.ColumnHeaderPadding" Value="10 5 10 5"/>
+        <Setter Property="materialDesign:DataGridAssist.CellPadding" Value="5"/>
+        <Setter Property="materialDesign:DataGridAssist.ColumnHeaderPadding" Value="5"/>
         <Setter Property="materialDesign:DataGridAssist.CornerRadius" Value="3"/>
-        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="materialDesign:DataGridAssist.SelectedCellBorderBrush" Value="Transparent"/>
+        <Setter Property="FontSize" Value="11"/>
     </Style>
-    
+
+    <Style x:Key="DataGridRowStyle" BasedOn="{StaticResource MaterialDesignDataGridRow}" TargetType="DataGridRow">
+        <Setter Property="Height" Value="30"/>
+    </Style>
+
     <Style x:Key="GroupBoxStyle" 
            BasedOn="{StaticResource MaterialDesignCardGroupBox}" 
            TargetType="GroupBox">

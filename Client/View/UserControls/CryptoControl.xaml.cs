@@ -2,9 +2,9 @@
 
 namespace Client.View.UserControls
 {
-    public partial class BursesControl : UserControl
+    public partial class CryptoControl : UserControl
     {
-        public BursesControl()
+        public CryptoControl()
         {
             InitializeComponent();
         }

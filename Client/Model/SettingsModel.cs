@@ -16,6 +16,10 @@ namespace Client.Model
         private string _binanceSecret = string.Empty;
         private string _bybitApi = string.Empty;
         private string _bybitSecret = string.Empty;
+        private string _quikClientCode = string.Empty;
+        private string _quikFirst = string.Empty;
+        private string _quikSecond = string.Empty;
+        private string _quikThird = string.Empty;
 
         public string OkxApi
         {
@@ -52,6 +56,36 @@ namespace Client.Model
             get => _bybitSecret;
             set => this.RaiseAndSetIfChanged(ref _bybitSecret, value);
         }
+        public string QuikClientCode
+        {
+            get => _quikClientCode;
+            set => this.RaiseAndSetIfChanged(ref _quikClientCode, value);
+        }
+        /// <summary>
+        /// SBPFUT.
+        /// </summary>
+        public string QuikFirst
+        {
+            get => _quikFirst;
+            set => this.RaiseAndSetIfChanged(ref _quikFirst, value);
+        }
+        /// <summary>
+        /// TQBR.
+        /// </summary>
+        public string QuikSecond
+        {
+            get => _quikSecond;
+            set => this.RaiseAndSetIfChanged(ref _quikSecond, value);
+        }
+        /// <summary>
+        /// CETS.
+        /// </summary>
+        public string QuikThird
+        {
+            get => _quikThird;
+            set => this.RaiseAndSetIfChanged(ref _quikThird, value);
+        }
+
 
         /// <summary>
         /// Считывает ключи из конфига.
@@ -65,6 +99,10 @@ namespace Client.Model
             BinanceSecret = ConfigService.GetKey("Binance", "Secret");
             BybitApi = ConfigService.GetKey("Bybit", "Api");
             BybitSecret = ConfigService.GetKey("Bybit", "Secret");
+            QuikClientCode = ConfigService.GetKey("Quik", "ClientCode");
+            QuikFirst = ConfigService.GetKey("Quik", "SPBFUT");
+            QuikSecond = ConfigService.GetKey("Quik", "TQBR");
+            QuikThird = ConfigService.GetKey("Quik", "CETS");
         }
 
         /// <summary>
@@ -79,6 +117,10 @@ namespace Client.Model
             ConfigService.SetKey("Binance", "Secret", BinanceSecret);
             ConfigService.SetKey("Bybit", "Api", BybitApi);
             ConfigService.SetKey("Bybit", "Secret", BybitSecret);
+            ConfigService.SetKey("Quik", "ClientCode", QuikClientCode);
+            ConfigService.SetKey("Quik", "SPBFUT", QuikFirst);
+            ConfigService.SetKey("Quik", "TQBR", QuikSecond);
+            ConfigService.SetKey("Quik", "CETS", QuikThird);
             ConfigService.Save();
         }
     }

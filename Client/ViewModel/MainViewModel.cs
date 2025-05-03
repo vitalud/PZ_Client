@@ -7,7 +7,9 @@ namespace Client.ViewModel
     public partial class MainViewModel : ReactiveObject
     {
         private readonly MainModel _mainModel;
-        private readonly BursesViewModel _burses;
+        private readonly CryptosViewModel _cryptos;
+        private readonly MultiCryptoViewModel _multiCrypto;
+        private readonly QuikViewModel _quik;
         private readonly SettingsViewModel _settings;
 
         private bool _applicationClosing;
@@ -18,7 +20,9 @@ namespace Client.ViewModel
         }
 
         public ReactiveCommand<Unit, Unit> CloseCommand { get; }
-        public ReactiveCommand<Unit, ReactiveObject> ShowBursesCommand { get; }
+        public ReactiveCommand<Unit, ReactiveObject> ShowCryptosCommand { get; }
+        public ReactiveCommand<Unit, ReactiveObject> ShowMultiCryptoCommand { get; }
+        public ReactiveCommand<Unit, ReactiveObject> ShowQuikCommand { get; }
         public ReactiveCommand<Unit, ReactiveObject> ShowSettingsCommand { get; }
 
         private ReactiveObject _currentViewModel;
@@ -28,18 +32,26 @@ namespace Client.ViewModel
             set => this.RaiseAndSetIfChanged(ref _currentViewModel, value);
         }
 
-        public MainViewModel(MainModel mainModel, BursesViewModel burses, SettingsViewModel settings)
+        public MainViewModel(MainModel mainModel, CryptosViewModel cryptos, MultiCryptoViewModel multiCrypto, QuikViewModel quik, SettingsViewModel settings)
         {
             _mainModel = mainModel;
-            _burses = burses;
+            _cryptos = cryptos;
+            _multiCrypto = multiCrypto;
+            _quik = quik;
             _settings = settings;
 
-            _currentViewModel = burses;
+            _currentViewModel = cryptos;
 
             CloseCommand = ReactiveCommand.Create(CloseApplication);
-            ShowBursesCommand = ReactiveCommand.Create(() => CurrentViewModel = _burses);
+            ShowCryptosCommand = ReactiveCommand.Create(() => CurrentViewModel = _cryptos);
+            ShowMultiCryptoCommand = ReactiveCommand.Create(() => CurrentViewModel = _multiCrypto);
+            ShowQuikCommand = ReactiveCommand.Create(() => CurrentViewModel = _quik);
             ShowSettingsCommand = ReactiveCommand.Create(() => CurrentViewModel = _settings);
         }
+
+        /// <summary>
+        /// TODO: проверить функционал
+        /// </summary>
         private void CloseApplication()
         {
             _mainModel.CloseApplication();

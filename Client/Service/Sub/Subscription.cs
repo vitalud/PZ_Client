@@ -7,17 +7,18 @@ using ProjectZeroLib.Signal;
 using ProjectZeroLib.Utils;
 using ReactiveUI;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Reactive.Linq;
 
 namespace Client.Service.Sub
 {
     public partial class Subscription : ReactiveObject
     {
-        PlaceOrders? placeOrders;
-        CloseOrders? closeOrders;
+        PlaceOrder? placeOrder;
+        CloseOrder? closeOrder;
         GetTickerPrice? getTickerPrice;
         UpdateOrderPrice? updateOrderPrice;
-        ClosePositions? closePositions;
+        ClosePosition? closePosition;
         CheckBalance? checkBalance;
 
         private readonly List<Stock> _stocks = [];
@@ -299,21 +300,23 @@ namespace Client.Service.Sub
         {
             if (data.Stocks.Count != Stocks.Count || !data.Stocks.Any()) return;
 
-            if (placeOrders == null || checkBalance == null) return;
+            if (checkBalance == null) return;
 
             if (!OrderRule(data)) return;
 
             await CloseOrders();
             await ClosePositions();
 
-            var tasks = data.Stocks.Select(GetOrder);
+            var getOrderTasks = data.Stocks.Select(GetOrder);
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(getOrderTasks);
 
             await CalcOrderSize();
 
             if (checkBalance.Invoke(TradeLimit))
-                await placeOrders.Invoke(Orders);
+            {
+                await PlaceOrders();
+            }
         }
 
         /// <summary>
@@ -341,12 +344,29 @@ namespace Client.Service.Sub
         /// </summary>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
+        private async Task PlaceOrders()
+        {
+            if (placeOrder == null)
+                throw new ArgumentNullException(nameof(placeOrder));
+
+            var placeOrderTasks = Orders.Items.Select(placeOrder.Invoke);
+
+            await Task.WhenAll(placeOrderTasks);
+        }
+
+        /// <summary>
+        /// Закрывает неисполненные заявки.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         private async Task CloseOrders()
         {
-            if (closeOrders == null) 
-                throw new ArgumentNullException(nameof(closeOrders));
+            if (closeOrder == null) 
+                throw new ArgumentNullException(nameof(closeOrder));
 
-            await closeOrders.Invoke(Orders);
+            var closeOrderTasks = Orders.Items.Select(closeOrder.Invoke);
+
+            await Task.WhenAll(closeOrderTasks);
 
             await UiInvoker.UiInvoke(Orders.Clear);
         }
@@ -358,10 +378,12 @@ namespace Client.Service.Sub
         /// <exception cref="ArgumentNullException"></exception>
         private async Task ClosePositions()
         {
-            if (closePositions == null)
-                throw new ArgumentNullException(nameof(closePositions));
+            if (closePosition == null)
+                throw new ArgumentNullException(nameof(closePosition));
 
-            await closePositions.Invoke(Positions);
+            var closePositionTasks = Positions.Items.Select(closePosition.Invoke);
+
+            await Task.WhenAll(closePositionTasks);
 
             await UiInvoker.UiInvoke(Positions.Clear);
         }
@@ -467,6 +489,24 @@ namespace Client.Service.Sub
             }
         }
 
+        private void LogTradeData(Order trade)
+        {
+            var path = Path.Combine(Environment.CurrentDirectory, "logs", "trades", Code);
+
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            using StreamWriter sw = new(Path.Combine(path, "tradebook.txt"), true);
+            //var sb = new StringBuilder(
+            //    $"Update time: {UpdateTime} " +
+            //    $"Order status: {State} " +
+            //    $"Current balance: {Balance} " +
+            //    $"Fee: {Fee} " +
+            //    $"PnL: {Pnl}");
+
+            //sw.WriteLine(sb);
+        }
+
         /// <summary>
         /// TODO: вынести в отдельный класс
         /// </summary>
@@ -498,11 +538,11 @@ namespace Client.Service.Sub
             return pass;
         }
 
-        public void RegisterPlaceOrdersHandler(PlaceOrders del) => placeOrders = del;
-        public void RegisterCloseOrdersHandler(CloseOrders del) => closeOrders = del;
+        public void RegisterPlaceOrderHandler(PlaceOrder del) => placeOrder = del;
+        public void RegisterCloseOrderHandler(CloseOrder del) => closeOrder = del;
         public void RegisterGetPositionalPriceHandler(GetTickerPrice del) => getTickerPrice = del;
         public void RegisterUpdateOrderPriceHandler(UpdateOrderPrice del) => updateOrderPrice = del;
-        public void RegisterClosePositionsHandler(ClosePositions del) => closePositions = del;
+        public void RegisterClosePositionsHandler(ClosePosition del) => closePosition = del;
         public void RegisterCheckBalanceHandler(CheckBalance del) => checkBalance = del;
     }
 }

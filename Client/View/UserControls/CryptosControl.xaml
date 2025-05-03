@@ -1,0 +1,107 @@
+﻿<UserControl x:Class="Client.View.UserControls.CryptosControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:control="clr-namespace:Client.View.UserControls"
+             xmlns:vm="clr-namespace:Client.ViewModel.Crypto"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="1000"
+             Background="White">
+    <UserControl.Resources>
+        <DataTemplate DataType="{x:Type vm:OkxViewModel}">
+            <control:CryptoControl/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BinanceViewModel}">
+            <control:CryptoControl/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BybitViewModel}">
+            <control:CryptoControl/>
+        </DataTemplate>
+    </UserControl.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0" Margin="5">
+                    <ComboBox
+                        Width="150"
+                        HorizontalAlignment="Left"
+                        BorderBrush="LightGray"
+                        materialDesign:HintAssist.Hint="Crypto"
+                        Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                        ItemsSource="{Binding CryptosViewModels}"
+                        DisplayMemberPath="Name"
+                        SelectedItem="{Binding SelectedCryptoViewModel, Mode=TwoWay}">
+                    </ComboBox>
+                </Grid>
+
+                <Grid Grid.Column="1">
+                    <DockPanel>
+                        <Border Margin="5" VerticalAlignment="Center"
+                            DockPanel.Dock="Right"
+                            Width="100" HorizontalAlignment="Right">
+                            <StackPanel>
+                                <Label Content="Balance" FontSize="12" 
+                                   Padding="1" Foreground="Gray"
+                                   FontWeight="DemiBold" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="USDT " FontSize="12" Foreground="Green"
+                                        Padding="1" FontWeight="DemiBold"/>
+                                    <Label Content="{Binding Balance}" FontSize="12" 
+                                        Foreground="Green"
+                                        Padding="1" FontWeight="DemiBold"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="0" Grid.Column="1" DockPanel.Dock="Right"
+                        Style="{StaticResource VerticalLineBorderStyle}" />
+
+                        <Border Margin="5" VerticalAlignment="Center"
+                            DockPanel.Dock="Right"
+                            Width="100" HorizontalAlignment="Right">
+                            <StackPanel>
+                                <Label Content="Status" FontSize="12" 
+                                   Padding="1" Foreground="Gray"
+                                   FontWeight="DemiBold" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Style="{StaticResource ConnectionStatusStyle}" 
+                                       Padding="1" FontSize="12" FontWeight="DemiBold"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="0" Grid.Column="1" DockPanel.Dock="Right"
+                        Style="{StaticResource VerticalLineBorderStyle}" />
+
+                        <Button x:Name="TestButton" Command="{Binding ConnectCommand}" 
+                                DockPanel.Dock="Right" HorizontalAlignment="Right"
+                                Style="{StaticResource MaterialDesignIconButton}">
+                            <materialDesign:PackIcon Kind="Connection" />
+                        </Button>
+
+                    </DockPanel>
+
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <ContentPresenter Content="{Binding SelectedCryptoViewModel}"
+                      HorizontalAlignment="Stretch" 
+                      VerticalAlignment="Stretch"/>
+        </Grid>
+    </Grid>
+</UserControl>

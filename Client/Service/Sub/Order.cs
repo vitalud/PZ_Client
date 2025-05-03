@@ -17,7 +17,7 @@ namespace Client.Service.Sub
         /// <summary>
         /// Имя инструмента.
         /// </summary>
-        public string Id { get; } = id;
+        public string Id { get; set; } = id;
 
         /// <summary>
         /// Тип инструмента.
@@ -32,12 +32,12 @@ namespace Client.Service.Sub
         /// <summary>
         /// Id ордера на бирже, создаваемый стратегией.
         /// </summary>
-        public string ClientOrderId { get; } = clientOrderId;
+        public string ClientOrderId { get; set; } = clientOrderId;
 
         /// <summary>
         /// Id ордера на бирже, создаваемый биржей.
         /// </summary>
-        public string OrderId { get; set; } = string.Empty;
+        public int OrderId { get; set; }
 
         /// <summary>
         /// Сторона ордера (купля или продажа).

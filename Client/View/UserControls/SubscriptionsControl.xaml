@@ -1,0 +1,136 @@
+﻿<UserControl x:Class="Client.View.UserControls.SubscriptionsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Client.View.UserControls"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="160"/>
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.618*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Strategies -->
+            <Grid Margin="5" Grid.Column="0" Grid.Row="0">
+                <GroupBox Style="{StaticResource GroupBoxStyle}" 
+                          Header="Strategies"
+                          HeaderTemplate="{StaticResource GroupBoxHeaderTemplate}">
+                    <DataGrid Style="{StaticResource DataGridStyle}" 
+                              ItemsSource="{Binding Subscriptions}"
+                              RowStyle="{StaticResource DataGridRowStyle}"
+                              SelectedItem="{Binding SelectedSub, Mode=TwoWay}">
+                        <DataGrid.Resources>
+                            <Style TargetType="ScrollBar" 
+                                   BasedOn="{StaticResource MaterialDesignScrollBarMinimal}"/>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="On/Off" Binding="{Binding IsActive}" Width="60"/>
+                            <DataGridTextColumn Header="Code" Binding="{Binding Code}" IsReadOnly="True" Width="60"/>
+                            <DataGridTextColumn Header="Type" Binding="{Binding Types}" IsReadOnly="True" Width="*"/>
+                            <DataGridTextColumn Header="Id" Binding="{Binding Instruments}" IsReadOnly="True" Width="*"/>
+                            <DataGridTextColumn Header="Limit" Binding="{Binding TradeLimit}" IsReadOnly="True" Width="60"/>
+                            <DataGridTextColumn Header="Interval" Binding="{Binding UpdateTime}" Width="60"/>
+                            <DataGridTextColumn Header="Position" Binding="{Binding Position}" Width="60"/>
+                            <DataGridCheckBoxColumn Header="Hold" Binding="{Binding Holding}" Width="60"/>
+                            <DataGridTextColumn Header="Profit" Binding="{Binding Profit}" IsReadOnly="True" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+            </Grid>
+
+            <!-- Positions -->
+            <Grid Margin="5, 0, 5, 5" Grid.Column="0" Grid.Row="1">
+                <GroupBox Style="{StaticResource GroupBoxStyle}" 
+                  Header="Positions"
+                  HeaderTemplate="{StaticResource GroupBoxHeaderTemplate}">
+                    <Grid>
+                        <DataGrid Style="{StaticResource DataGridStyle}" 
+                                  Background="WhiteSmoke" 
+                                  IsReadOnly="True"
+                                  ItemsSource="{Binding SelectedPositions}" >
+                            <DataGrid.Resources>
+                                <Style TargetType="ScrollBar" 
+                                       BasedOn="{StaticResource MaterialDesignScrollBarMinimal}"/>
+                            </DataGrid.Resources>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="*"/>
+                                <DataGridTextColumn Header="Price" Binding="{Binding Price}" Width="60"/>
+                                <DataGridTextColumn Header="Side" Binding="{Binding Side}" Width="60"/>
+                                <DataGridTextColumn Header="Size" Binding="{Binding Size}" Width="60"/>
+                                <DataGridTextColumn Header="Profit" Binding="{Binding Profit}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </GroupBox>
+            </Grid>
+
+            <!-- Trades -->
+            <Grid Margin="0, 5, 5, 5" Grid.Column="1" Grid.Row="0">
+                <GroupBox Style="{StaticResource GroupBoxStyle}" 
+                  Header="Trades"
+                  HeaderTemplate="{StaticResource GroupBoxHeaderTemplate}">
+                    <Grid>
+                        <DataGrid Style="{StaticResource DataGridStyle}"                                                                 
+                                  Background="WhiteSmoke" 
+                                  IsReadOnly="True"
+                                  ItemsSource="{Binding SelectedTrades}">
+                            <DataGrid.Resources>
+                                <Style TargetType="ScrollBar" 
+                                       BasedOn="{StaticResource MaterialDesignScrollBarMinimal}"/>
+                            </DataGrid.Resources>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Time" Binding="{Binding Date}" Width="80"/>
+                                <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="*"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="60" 
+                                                    CellStyle="{StaticResource DataGridOrderStatusStyle}"/>
+                                <DataGridTextColumn Header="Side" Binding="{Binding Side}" Width="60"  
+                                                    CellStyle="{StaticResource DataGridOrderSideStyle}"/>
+                                <DataGridTextColumn Header="Size" Binding="{Binding Size}" Width="60"/>
+                                <DataGridTextColumn Header="Price" Binding="{Binding Price}" Width="60"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </GroupBox>
+            </Grid>
+
+            <!-- Orders -->
+            <Grid Margin="0, 0, 5, 5" Grid.Column="1" Grid.Row="1">
+                <GroupBox Style="{StaticResource GroupBoxStyle}" 
+                  Header="Orders"
+                  HeaderTemplate="{StaticResource GroupBoxHeaderTemplate}">
+                    <Grid>
+                        <DataGrid Style="{StaticResource DataGridStyle}"                                                                 
+                                  Background="WhiteSmoke" 
+                                  IsReadOnly="True"
+                                  ItemsSource="{Binding SelectedOrders}">
+                            <DataGrid.Resources>
+                                <Style TargetType="ScrollBar" 
+                                       BasedOn="{StaticResource MaterialDesignScrollBarMinimal}">
+                                </Style>
+                            </DataGrid.Resources>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Time" Binding="{Binding Date}" Width="80"/>
+                                <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="*"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="60" 
+                                                    CellStyle="{StaticResource DataGridOrderStatusStyle}"/>
+                                <DataGridTextColumn Header="Side" Binding="{Binding Side}" Width="60" 
+                                                    CellStyle="{StaticResource DataGridOrderSideStyle}"/>
+                                <DataGridTextColumn Header="Quantity" Binding="{Binding Size}" Width="60"/>
+                                <DataGridTextColumn Header="Price" Binding="{Binding Price}" Width="60"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </GroupBox>
+            </Grid>
+        </Grid>
+
+    </Grid>
+</UserControl>

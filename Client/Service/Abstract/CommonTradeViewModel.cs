@@ -1,4 +1,5 @@
-﻿using Client.Service.Sub;
+﻿using Client.Service.Interface;
+using Client.Service.Sub;
 using DynamicData;
 using ProjectZeroLib.Enums;
 using ReactiveUI;
@@ -8,9 +9,9 @@ using System.Reactive.Linq;
 
 namespace Client.Service.Abstract
 {
-    public partial class BurseViewModel : ReactiveObject
+    public partial class CommonTradeViewModel : ReactiveObject
     {
-        protected readonly BurseModel _burseModel;
+        protected readonly IExchange _cryptoModel;
 
         private readonly ReadOnlyObservableCollection<Subscription> _subscriptions;
         private Subscription _selectedSub = new();
@@ -34,11 +35,7 @@ namespace Client.Service.Abstract
         public ReadOnlyObservableCollection<Order> SelectedTrades => SelectedSub.TradesTable;
         public ReadOnlyObservableCollection<Position> SelectedPositions => SelectedSub.PositionsTable;
 
-        public BurseName Name
-        {
-            get => _burseModel.Name;
-            set => _burseModel.Name = value;
-        }
+        public BurseName Name => _cryptoModel.Name;
         public decimal Balance
         {
             get => _balance;
@@ -53,24 +50,24 @@ namespace Client.Service.Abstract
         public ReactiveCommand<Unit, Unit> ConnectCommand { get; }
         public ReactiveCommand<Unit, Unit> TestCommand { get; }
 
-        public BurseViewModel(BurseModel burseModel)
+        public CommonTradeViewModel(IExchange burseModel)
         {
-            _burseModel = burseModel;
+            _cryptoModel = burseModel;
 
-            _burseModel.Subscriptions.Connect()
+            _cryptoModel.Subscriptions.Connect()
                 .Bind(out _subscriptions)
                 .Subscribe();
 
-            Balance = _burseModel.Balance;
-            _burseModel.WhenAnyValue(x => x.Balance)
+            Balance = _cryptoModel.Balance;
+            _cryptoModel.WhenAnyValue(x => x.Balance)
                 .Subscribe(value => Balance = value);
 
-            IsConnected = _burseModel.IsConnected;
-            _burseModel.WhenAnyValue(x => x.IsConnected)
+            IsConnected = _cryptoModel.IsConnected;
+            _cryptoModel.WhenAnyValue(x => x.IsConnected)
                 .Subscribe(value => IsConnected = value);
 
-            ConnectCommand = ReactiveCommand.Create(_burseModel.Connect);
-            TestCommand = ReactiveCommand.Create(_burseModel.Test);
+            ConnectCommand = ReactiveCommand.Create(_cryptoModel.Connect);
+            TestCommand = ReactiveCommand.Create(_cryptoModel.Test);
         }
     }
 }

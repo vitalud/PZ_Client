@@ -1,8 +1,8 @@
 using Client.Service;
 using Client.Service.Sub;
-using DynamicData;
 using NUnit.Framework.Internal;
 using ProjectZeroLib.Enums;
+using Serilog;
 using System.Diagnostics;
 using System.Windows;
 
@@ -11,7 +11,7 @@ namespace Tests
     [TestFixture]
     public class SubscriptionTests
     {
-        private readonly SubscriptionsRepository _subs = new();
+        private readonly SubscriptionsRepository _subs = new(Log.Logger);
         public Subscription Sub => _subs.Subscriptions.Items[0];
         public Order Order => Sub.Orders.Items[0];
         public Order Trade => Sub.Trades.Items[Sub.Trades.Items.Count - 1];
@@ -30,11 +30,11 @@ namespace Tests
             DispatcherUtil.DoEvents();
 
             Sub.IsActive = true;
-            Sub.RegisterPlaceOrdersHandler(PlaceOrders);
-            Sub.RegisterCloseOrdersHandler(CloseOrders);
+            Sub.RegisterPlaceOrderHandler(PlaceOrder);
+            Sub.RegisterCloseOrderHandler(CloseOrder);
             Sub.RegisterGetPositionalPriceHandler(GetTickerPrice);
             Sub.RegisterUpdateOrderPriceHandler(UpdateOrderPrice);
-            Sub.RegisterClosePositionsHandler(ClosePositions);
+            Sub.RegisterClosePositionsHandler(ClosePosition);
             Sub.RegisterCheckBalanceHandler(CheckBalance);
         }
 
@@ -43,7 +43,7 @@ namespace Tests
             Debug.WriteLine($"status_{code}_{status}");
         }
 
-        private async Task PlaceOrders(SourceList<Order> orders)
+        private async Task PlaceOrder(Order order)
         {
             await Task.Run(() => 
             {
@@ -51,8 +51,7 @@ namespace Tests
                 Order.Status = "Live";
             });
         }
-        private async Task CloseOrders(SourceList<Order> orders)
-        {
+        private async Task CloseOrder(Order order) {
             await Task.Run(() => Debug.WriteLine("close orders"));
         }
         private Task<decimal> GetTickerPrice(Order order, int pos)
@@ -63,7 +62,7 @@ namespace Tests
         {
             return Task.CompletedTask;
         }
-        private async Task ClosePositions(SourceList<Position> positions)
+        private async Task ClosePosition(Position position)
         {
             await Task.Run(() =>
             {
